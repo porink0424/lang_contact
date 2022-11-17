@@ -1,1 +1,5 @@
+# file for casual use
 ex.txt
+
+# files related to pycache
+*.pyc
