@@ -3,3 +3,6 @@ ex.txt
 
 # files related to pycache
 *.pyc
+
+# outputs files
+slurm-*
