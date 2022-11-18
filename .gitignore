@@ -1,8 +1,10 @@
 # file for casual use
 ex.txt
+ex.sh
 
 # files related to pycache
 *.pyc
 
 # outputs files
 slurm-*
+result/*
