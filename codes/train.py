@@ -11,9 +11,9 @@ from data import enumerate_attribute_value, split_train_test, one_hotify, Scaled
 from archs import Sender, Receiver, PlusOneWrapper
 from loss import DiffLoss
 
-# TODO: Eliminate unused params
 def get_params(params):
     parser = argparse.ArgumentParser()
+    parser.add_argument('--id', type=str, default='id_unknown', help='')
     parser.add_argument('--n_attributes', type=int, default=4, help='')
     parser.add_argument('--n_values', type=int, default=4, help='')
     parser.add_argument('--data_scaler', type=int, default=100)
@@ -60,7 +60,7 @@ def main(params):
         one_hotify(test, opts.n_attributes, opts.n_values)
 
     # make data into Dataset, DataLoader
-    # TODO: Should we use ScaledDataset????
+    # To promote training, ScaledDataset is used.
     train, test = ScaledDataset(train, opts.data_scaler), ScaledDataset(test)
     train_loader, test_loader = \
         DataLoader(train, batch_size=opts.batch_size), \
@@ -71,79 +71,141 @@ def main(params):
     # make a Sender
     if opts.sender_cell in ['lstm', 'rnn', 'gru']:
         # linear layer changes n_inputs to n_hidden
-        sender = Sender(n_inputs=n_dim, n_hidden=opts.sender_hidden)
+        senders = [Sender(n_inputs=n_dim, n_hidden=opts.sender_hidden) for _ in range(2)]
         # Reinforce Wrapper for Sender
         # return sequence, logits, entropy
-        sender = core.RnnSenderReinforce(
-            agent=sender,
-            vocab_size=opts.vocab_size,
-            embed_dim=opts.sender_emb,
-            hidden_size=opts.sender_hidden,
-            max_len=opts.max_len,
-            force_eos=False,
-            cell=opts.sender_cell
-        )
+        senders = [
+            core.RnnSenderReinforce(
+                agent=sender,
+                vocab_size=opts.vocab_size,
+                embed_dim=opts.sender_emb,
+                hidden_size=opts.sender_hidden,
+                max_len=opts.max_len,
+                force_eos=False,
+                cell=opts.sender_cell
+            ) for sender in senders
+        ]
         # In EGG, value 0 means EOS. To avoid this, sender is wrapped by PlusOneWrapper
         # TODO: Should we use PlusOneWrapper????
-        sender = PlusOneWrapper(sender)
+        senders = [PlusOneWrapper(sender) for sender in senders]
     else:
         raise ValueError(f'Unknown sender cell, {opts.sender_cell}')
 
     # make a Receiver
     if opts.receiver_cell in ['lstm', 'rnn', 'gru']:
-        receiver = Receiver(n_hidden=opts.receiver_hidden, n_outputs=n_dim)
+        # linear layer changes n_hidden to n_outputs
+        receivers = [Receiver(n_hidden=opts.receiver_hidden, n_outputs=n_dim) for _ in range(2)]
         # Reinforce Wrapper for a deterministic Receiver
-        receiver = core.RnnReceiverDeterministic(
-            receiver,
-            opts.vocab_size + 1,
-            opts.receiver_emb,
-            opts.receiver_hidden,
-            cell=opts.receiver_cell
-        )
+        receivers = [
+            core.RnnReceiverDeterministic(
+                receiver,
+                opts.vocab_size + 1,
+                opts.receiver_emb,
+                opts.receiver_hidden,
+                cell=opts.receiver_cell
+            ) for receiver in receivers
+        ]
     else:
         raise ValueError(f'Unknown receiver cell, {opts.receiver_cell}')
 
     # calculate a cross_entropy
-    loss = DiffLoss(opts.n_attributes, opts.n_values)
+    losses = [DiffLoss(opts.n_attributes, opts.n_values) for _ in range(2)]
 
     # Implement Sender/Receiver game via Reinforce
-    baseline = {
-        'no': core.baselines.NoBaseline, 
-        'mean': core.baselines.MeanBaseline, 
-        'builtin': core.baselines.BuiltInBaseline
-    }[opts.baseline]
-    game = core.SenderReceiverRnnReinforce(
-        sender,
-        receiver,
-        loss,
-        sender_entropy_coeff=opts.sender_entropy_coeff,
-        receiver_entropy_coeff=0.0,
-        length_cost=0.0,
-        baseline_type=baseline,
-    )
-    optimizer = torch.optim.Adam(game.parameters(), lr=opts.lr)
+    baseline = [
+        {
+            'no': core.baselines.NoBaseline, 
+            'mean': core.baselines.MeanBaseline, 
+            'builtin': core.baselines.BuiltInBaseline
+        }[opts.baseline] for _ in range(2)
+    ]
+    games = [
+        core.SenderReceiverRnnReinforce(
+            senders[i],
+            receivers[i],
+            losses[i],
+            sender_entropy_coeff=opts.sender_entropy_coeff,
+            receiver_entropy_coeff=0.0,
+            length_cost=0.0,
+            baseline_type=baseline[i],
+        ) for i in range(2)
+    ]
+    optimizers = [torch.optim.Adam(game.parameters(), lr=opts.lr) for game in games]
 
     # training
-    early_stopper = core.EarlyStopperAccuracy(opts.early_stopping_thr, validation=True) # check on test_data, and may stop train.
-    trainer = core.Trainer(
-        game=game,
-        optimizer=optimizer,
-        train_data=train_loader,
-        validation_data=test_loader,
-        callbacks=[
-            core.ConsoleLogger(as_json=True, print_train_loss=False),
-            early_stopper,
-        ]
-    )
-    trainer.train(n_epochs=opts.n_epochs)
+    early_stopper = core.EarlyStopperAccuracy(opts.early_stopping_thr, validation=False) # early stoppers check the accuracy on train_data, and may stop train according to it.
+    trainers = [
+        core.Trainer(
+            game=games[i],
+            optimizer=optimizers[i],
+            train_data=train_loader,
+            validation_data=test_loader,
+            callbacks=[
+                core.ConsoleLogger(as_json=True, print_train_loss=True),
+                early_stopper,
+            ]
+        ) for i in range(2)
+    ]
+    # TODO: training using multithread
+    for i, trainer in enumerate(trainers):
+        print(f'--------------------{i}-th training start--------------------')
+        trainer.train(n_epochs=opts.n_epochs)
+        print(f'--------------------{i}-th training end--------------------')
+    
+    # save the model
+    for i in range(2):
+        print(f"L_{i+1} saving...")
+        torch.save(senders[i], f"model/{opts.id}--L_{i+1}-sender.pth")
+        torch.save(receivers[i], f"model/{opts.id}--L_{i+1}-receiver.pth")
+        print("Done!")
 
-    # try to generate messages
-    # TODO: sequence does not seem to change? is it ok?
-    batch = torch.tensor([test[0][0].tolist() for _ in range(20)] + [test[1][0].tolist() for _ in range(20)])
-    sequence, logits, entropy = sender(batch)
-    print(sequence)
-    # print(logits)
-    # print(entropy)
+    # contact languages setup
+    contact_losses = [DiffLoss(opts.n_attributes, opts.n_values) for _ in range(2)]
+    contact_baseline = [
+        {
+            'no': core.baselines.NoBaseline, 
+            'mean': core.baselines.MeanBaseline, 
+            'builtin': core.baselines.BuiltInBaseline
+        }[opts.baseline] for _ in range(2)
+    ]
+    contact_games = [
+        core.SenderReceiverRnnReinforce(
+            senders[i],
+            receivers[j],
+            contact_losses[i],
+            sender_entropy_coeff=opts.sender_entropy_coeff,
+            receiver_entropy_coeff=0.0,
+            length_cost=0.0,
+            baseline_type=contact_baseline[i],
+        ) for (i, j) in [(0, 1), (1, 0)]
+    ]
+    contact_optimizers = [torch.optim.Adam(game.parameters(), lr=opts.lr) for game in contact_games]
+    
+    # contact languages training
+    contact_trainers = [
+        core.Trainer(
+            game=contact_games[i],
+            optimizer=contact_optimizers[i],
+            train_data=train_loader,
+            validation_data=test_loader,
+            callbacks=[
+                core.ConsoleLogger(as_json=True, print_train_loss=True),
+                early_stopper,
+            ]
+        ) for i in range(2)
+    ]
+    # TODO: training using multithread
+    for i, trainer in enumerate(contact_trainers):
+        print(f'--------------------{i}-th (contact language) training start--------------------')
+        trainer.train(n_epochs=opts.n_epochs)
+        print(f'--------------------{i}-th (contact language) training end--------------------')
+
+    # save the model
+    for i in range(2):
+        print(f"L_{i+3} saving...")
+        torch.save(senders[i], f"model/{opts.id}--L_{i+3}-sender.pth")
+        torch.save(receivers[i], f"model/{opts.id}--L_{i+3}-receiver.pth")
+        print("Done!")
 
     print('--------------------End--------------------')
 
