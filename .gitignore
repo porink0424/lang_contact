@@ -8,3 +8,4 @@ ex.sh
 # outputs files
 slurm-*
 result/*
+!result/.gitkeep
