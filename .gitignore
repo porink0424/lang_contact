@@ -9,3 +9,5 @@ ex.sh
 slurm-*
 result/*
 !result/.gitkeep
+model/*
+!model/.gitkeep
