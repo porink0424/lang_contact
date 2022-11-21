@@ -14,6 +14,7 @@ from loss import DiffLoss
 def get_params(params):
     parser = argparse.ArgumentParser()
     parser.add_argument('--id', type=str, default='id_unknown', help='')
+    parser.add_argument('--comment', type=str, default='', help='')
     parser.add_argument('--n_attributes', type=int, default=4, help='')
     parser.add_argument('--n_values', type=int, default=4, help='')
     parser.add_argument('--data_scaler', type=int, default=100)
@@ -148,9 +149,9 @@ def main(params):
     ]
     # TODO: training using multithread
     for i, trainer in enumerate(trainers):
-        print(f'--------------------{i}-th training start--------------------')
+        print(f'--------------------L_{i+1} training start--------------------')
         trainer.train(n_epochs=opts.n_epochs)
-        print(f'--------------------{i}-th training end--------------------')
+        print(f'--------------------L_{i+1} training end--------------------')
     
     # save the model
     for i in range(2):
@@ -196,9 +197,9 @@ def main(params):
     ]
     # TODO: training using multithread
     for i, trainer in enumerate(contact_trainers):
-        print(f'--------------------{i}-th (contact language) training start--------------------')
+        print(f'--------------------L_{i+3} training start--------------------')
         trainer.train(n_epochs=opts.n_epochs)
-        print(f'--------------------{i}-th (contact language) training end--------------------')
+        print(f'--------------------L_{i+3} training end--------------------')
 
     # save the model
     for i in range(2):
