@@ -13,6 +13,8 @@ model/*
 !model/.gitkeep
 result_graph/*
 !result_graph/.gitkeep
+result_md/*
+!result_md/.gitkeep
 
 # config
 .vscode/*
