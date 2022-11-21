@@ -11,3 +11,6 @@ result/*
 !result/.gitkeep
 model/*
 !model/.gitkeep
+
+# config
+.vscode/*
