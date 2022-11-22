@@ -44,7 +44,6 @@ def get_params(params):
     return args
 
 def main(params):
-    import copy
     opts = get_params(params)
     device = opts.device
 
@@ -154,10 +153,15 @@ def main(params):
         print(f'--------------------L_{i+1} training end--------------------')
     
     # save the model
+    import os
+    try:
+        os.mkdir(f"model/{opts.id}")
+    except FileExistsError:
+        pass
     for i in range(2):
         print(f"L_{i+1} saving...")
-        torch.save(senders[i], f"model/{opts.id}--L_{i+1}-sender.pth")
-        torch.save(receivers[i], f"model/{opts.id}--L_{i+1}-receiver.pth")
+        torch.save(senders[i], f"model/{opts.id}/L_{i+1}-sender.pth")
+        torch.save(receivers[i], f"model/{opts.id}/L_{i+1}-receiver.pth")
         print("Done!")
 
     # contact languages setup
@@ -204,8 +208,8 @@ def main(params):
     # save the model
     for i in range(2):
         print(f"L_{i+3} saving...")
-        torch.save(senders[i], f"model/{opts.id}--L_{i+3}-sender.pth")
-        torch.save(receivers[i], f"model/{opts.id}--L_{i+3}-receiver.pth")
+        torch.save(senders[i], f"model/{opts.id}/L_{i+3}-sender.pth")
+        torch.save(receivers[i], f"model/{opts.id}/L_{i+3}-receiver.pth")
         print("Done!")
 
     print('--------------------End--------------------')
