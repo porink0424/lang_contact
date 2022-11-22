@@ -8,10 +8,10 @@ ex.sh
 # outputs files
 log/*
 !log/.gitkeep
-result/*
-!result/.gitkeep
 model/*
 !model/.gitkeep
+result/*
+!result/.gitkeep
 result_graph/*
 !result_graph/.gitkeep
 result_md/*
