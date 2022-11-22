@@ -6,7 +6,8 @@ ex.sh
 *.pyc
 
 # outputs files
-slurm-*
+log/*
+!log/.gitkeep
 result/*
 !result/.gitkeep
 model/*
