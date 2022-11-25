@@ -32,9 +32,6 @@ def topsim(no_cuda: bool, id: str, n_attributes: int, message_length: int):
         sequence, _logits, _entropy = sender(train_data)
         sequences.append(sequence)
 
-    print("train:", train_data) # TODO: delete me
-    print("sequences:", sequences) # TODO: delete me
-    
     # calculate Distance
     for sender_index in range(len(senders)):
         D_input = []
@@ -61,7 +58,6 @@ def topsim(no_cuda: bool, id: str, n_attributes: int, message_length: int):
                 D_msg.append(
                     [message1[l] != message2[l] for l in range(message_length)].count(True)
                 )
-        print(D_input, D_msg)
         correlation, _pvalue = spearmanr(D_input, D_msg)
         res.append(correlation)
     

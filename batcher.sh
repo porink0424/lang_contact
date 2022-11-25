@@ -4,15 +4,15 @@
 # 自分で決める変数
 mode=1 # 1: random_seedをいろいろ変えながら実行、0: 1つだけ実行
 start=1 # mode=1のときのみ使用
-end=1 # mode=1のときのみ使用
+end=4 # mode=1のときのみ使用
 random_seed=1 # mode=0のときのみ使用
 partition="p"
-comment="testtesttest" # 結果ファイルにコメントとして残される、NOTE: 空白をコメントに入れるとバグる
-natt=2
-nval=4
-cvoc=5
-clen=2
-epoch=10
+comment="新たな実験へ" # 結果ファイルにコメントとして残される、NOTE: 空白をコメントに入れるとバグる
+natt=4
+nval=5
+cvoc=10
+clen=4
+epoch=100
 early_stopping_thr=1.0001 # early stoppingなし
 sender_entropy_coeff=0.5
 
