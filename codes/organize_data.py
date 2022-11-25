@@ -6,6 +6,7 @@ from tomark import Tomark
 from entropy import entropy
 from ngram import ngram
 from topsim import topsim
+from generalizability import generalizability
 
 # --training start--から--training end--の中にあるデータをまとめてL_dataとして返す
 def extract_one_model_data(pattern, raw_text, L_data):
@@ -123,6 +124,9 @@ def main(file_path: str):
 
     # topsim
     topsim_result = topsim(config["no_cuda"] == "True", config['id'], int(config['n_attributes']), int(config['max_len']))
+
+    # generalizability
+    generalizability(config['id'], L_1_data, L_2_data, L_3_data, L_4_data)
 
     # make markdown
     f = open(f"result_md/{file_name}.md", "w")

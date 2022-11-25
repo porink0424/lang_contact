@@ -12,7 +12,7 @@ natt=2
 nval=4
 cvoc=5
 clen=2
-epoch=1
+epoch=10
 early_stopping_thr=1.0001 # early stoppingなし
 sender_entropy_coeff=0.5
 
