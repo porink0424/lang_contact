@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 import glob
 from tomark import Tomark
 from entropy import entropy
-from ngram import unigram
+from ngram import ngram
 
 # --training start--から--training end--の中にあるデータをまとめてL_dataとして返す
 def extract_one_model_data(pattern, raw_text, L_data):
@@ -117,8 +117,8 @@ def main(file_path: str):
     # entropy
     entropy(config['id'], L_1_data, L_2_data, L_3_data, L_4_data)
 
-    # unigram
-    unigram(config["no_cuda"] == "True", config['id'], int(config['vocab_size']))
+    # ngram
+    ngram(config["no_cuda"] == "True", config['id'], int(config['vocab_size']))
 
     # make markdown
     f = open(f"result_md/{file_name}.md", "w")
