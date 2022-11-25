@@ -10,6 +10,7 @@ import egg.core as core
 from data import enumerate_attribute_value, split_train_test, one_hotify, ScaledDataset
 from archs import Sender, Receiver, PlusOneWrapper
 from loss import DiffLoss
+import pickle
 
 def get_params(params):
     parser = argparse.ArgumentParser()
@@ -58,6 +59,19 @@ def main(params):
     train, test = \
         one_hotify(train, opts.n_attributes, opts.n_values), \
         one_hotify(test, opts.n_attributes, opts.n_values)
+    
+    # save inputs
+    import os
+    try:
+        os.mkdir(f"model/{opts.id}")
+    except FileExistsError:
+        pass
+    file_train = open(f"model/{opts.id}/train.txt", "wb")
+    pickle.dump(train, file_train)
+    file_train.close()
+    file_test = open(f"model/{opts.id}/test.txt", "wb")
+    pickle.dump(test, file_test)
+    file_test.close()
 
     # make data into Dataset, DataLoader
     # To promote training, ScaledDataset is used.
@@ -86,7 +100,6 @@ def main(params):
             ) for sender in senders
         ]
         # In EGG, value 0 means EOS. To avoid this, sender is wrapped by PlusOneWrapper
-        # TODO: Should we use PlusOneWrapper????
         senders = [PlusOneWrapper(sender) for sender in senders]
     else:
         raise ValueError(f'Unknown sender cell, {opts.sender_cell}')
@@ -153,11 +166,6 @@ def main(params):
         print(f'--------------------L_{i+1} training end--------------------')
     
     # save the model
-    import os
-    try:
-        os.mkdir(f"model/{opts.id}")
-    except FileExistsError:
-        pass
     for i in range(2):
         print(f"L_{i+1} saving...")
         torch.save(senders[i], f"model/{opts.id}/L_{i+1}-sender.pth")

@@ -3,6 +3,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 import glob
 from tomark import Tomark
+from entropy import entropy
+from ngram import unigram
 
 # --training start--から--training end--の中にあるデータをまとめてL_dataとして返す
 def extract_one_model_data(pattern, raw_text, L_data):
@@ -113,24 +115,10 @@ def main(file_path: str):
     )
 
     # entropy
-    plt.figure(facecolor='lightgray')
-    plt.title("Sender Entropy")
-    plt.xlabel("epochs")
-    plt.ylabel("entropy value")
-    L_1 = plt.plot(
-        np.array([i+1 for i in range(len(L_1_data["train"]))]), np.array([float(data["sender_entropy"]) for data in L_1_data['train']]),
-    )
-    L_2 = plt.plot(
-        np.array([i+1 for i in range(len(L_2_data["train"]))]), np.array([float(data["sender_entropy"]) for data in L_2_data['train']]),
-    )
-    L_3 = plt.plot(
-        np.array([i+1 for i in range(len(L_3_data["train"]))]), np.array([float(data["sender_entropy"]) for data in L_3_data['train']]),
-    )
-    L_4 = plt.plot(
-        np.array([i+1 for i in range(len(L_4_data["train"]))]), np.array([float(data["sender_entropy"]) for data in L_4_data['train']]),
-    )
-    plt.legend((L_1[0], L_2[0], L_3[0], L_4[0]), ("L_1", "L_2", "L_3", "L_4"), loc=1)
-    plt.savefig(f"result_graph/{file_name}--entropy.png")
+    entropy(config['id'], L_1_data, L_2_data, L_3_data, L_4_data)
+
+    # unigram
+    unigram(config["no_cuda"] == "True", config['id'], int(config['vocab_size']))
 
     # make markdown
     f = open(f"result_md/{file_name}.md", "w")
@@ -145,10 +133,9 @@ def main(file_path: str):
         + f"### Graphs\n\n"
     
     # 関連する全てのグラフ画像を取り出す
-    files = glob.glob("./result_graph/*")
+    files = glob.glob(f"./result_graph/{config['id']}/*")
     for file in files:
-        if file_name in file:
-            md_text += f"![{file[1:]}]({file[1:]})\n\n"
+        md_text += f"![{file[1:]}]({file[1:]})\n\n"
     f.write(md_text)
     f.close()
 

@@ -5,6 +5,6 @@
 for input; do
     rm -r model/$input
     rm result/$input--*
-    rm result_graph/$input--*
+    rm -r result_graph/$input
     rm result_md/$input--*
 done
