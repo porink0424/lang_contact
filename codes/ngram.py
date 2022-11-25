@@ -35,9 +35,6 @@ def ngram(no_cuda: bool, id: str, vocab_size: int):
         sequence, _logits, _entropy = sender(train_data)
         sequences.append(sequence)
     
-    # print sequences
-    print(sequences)
-    
     ###################
     #     unigram     #
     ###################  

@@ -3,9 +3,9 @@ import numpy as np
 import matplotlib.pyplot as plt
 import glob
 from tomark import Tomark
-import json
 from entropy import entropy
 from ngram import ngram
+from topsim import topsim
 
 # --training start--から--training end--の中にあるデータをまとめてL_dataとして返す
 def extract_one_model_data(pattern, raw_text, L_data):
@@ -121,6 +121,9 @@ def main(file_path: str):
     # ngram
     ngram_entropy = ngram(config["no_cuda"] == "True", config['id'], int(config['vocab_size']))
 
+    # topsim
+    topsim_result = topsim(config["no_cuda"] == "True", config['id'], int(config['n_attributes']), int(config['max_len']))
+
     # make markdown
     f = open(f"result_md/{file_name}.md", "w")
 
@@ -132,15 +135,26 @@ def main(file_path: str):
         + (f"### Comment\n\n{config['comment']}\n\n" if config['comment'] else "") \
         + f"### Setting\n\n{table}\n\n"
     
-    # n-gramのエントロピーに関するう情報をつける
+    # n-gramのエントロピーに関する情報をつける
     md_text += f"### N-gram entropy\n\n"
-    md_text += f"|| unigram | bigram |\n" \
+    md_text += "|| unigram | bigram |\n" \
         + "|-----|-----|-----|\n" \
         + f"| $L_1$ | {ngram_entropy['unigram_entropy'][0]} | {ngram_entropy['bigram_entropy'][0]} |\n" \
         + f"| $L_2$ | {ngram_entropy['unigram_entropy'][1]} | {ngram_entropy['bigram_entropy'][1]} |\n" \
+        + "|\n" \
         + f"| $L_3$ | {ngram_entropy['unigram_entropy'][2]} | {ngram_entropy['bigram_entropy'][2]} |\n" \
         + f"| $L_4$ | {ngram_entropy['unigram_entropy'][3]} | {ngram_entropy['bigram_entropy'][3]} |\n\n"
     
+    # topsimに関する情報をつける
+    md_text += f"### Topsim\n\n"
+    md_text += "|| Spearman Correlation |\n" \
+        + "|-----|-----|\n" \
+        + f"| $L_1$ | {topsim_result[0]} |\n" \
+        + f"| $L_2$ | {topsim_result[1]} |\n" \
+        + "|\n" \
+        + f"| $L_3$ | {topsim_result[2]} |\n" \
+        + f"| $L_4$ | {topsim_result[3]} |\n\n"
+
     # 関連する全てのグラフ画像を取り出す
     md_text += f"### Graphs\n\n"
     files = glob.glob(f"./result_graph/{config['id']}/*")
