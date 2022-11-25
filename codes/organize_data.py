@@ -3,6 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import glob
 from tomark import Tomark
+import json
 from entropy import entropy
 from ngram import ngram
 
@@ -118,7 +119,7 @@ def main(file_path: str):
     entropy(config['id'], L_1_data, L_2_data, L_3_data, L_4_data)
 
     # ngram
-    ngram(config["no_cuda"] == "True", config['id'], int(config['vocab_size']))
+    ngram_entropy = ngram(config["no_cuda"] == "True", config['id'], int(config['vocab_size']))
 
     # make markdown
     f = open(f"result_md/{file_name}.md", "w")
@@ -129,10 +130,19 @@ def main(file_path: str):
     table = Tomark.table(transposed_config)
     md_text = f"# {file_name}\n\n" \
         + (f"### Comment\n\n{config['comment']}\n\n" if config['comment'] else "") \
-        + f"### Setting\n\n{table}\n\n" \
-        + f"### Graphs\n\n"
+        + f"### Setting\n\n{table}\n\n"
+    
+    # n-gramのエントロピーに関するう情報をつける
+    md_text += f"### N-gram entropy\n\n"
+    md_text += f"|| unigram | bigram |\n" \
+        + "|-----|-----|-----|\n" \
+        + f"| $L_1$ | {ngram_entropy['unigram_entropy'][0]} | {ngram_entropy['bigram_entropy'][0]} |\n" \
+        + f"| $L_2$ | {ngram_entropy['unigram_entropy'][1]} | {ngram_entropy['bigram_entropy'][1]} |\n" \
+        + f"| $L_3$ | {ngram_entropy['unigram_entropy'][2]} | {ngram_entropy['bigram_entropy'][2]} |\n" \
+        + f"| $L_4$ | {ngram_entropy['unigram_entropy'][3]} | {ngram_entropy['bigram_entropy'][3]} |\n\n"
     
     # 関連する全てのグラフ画像を取り出す
+    md_text += f"### Graphs\n\n"
     files = glob.glob(f"./result_graph/{config['id']}/*")
     for file in files:
         md_text += f"![{file[1:]}]({file[1:]})\n\n"

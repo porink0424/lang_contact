@@ -1,8 +1,14 @@
 import torch
 import pickle
 import matplotlib.pyplot as plt
+import numpy as np
+from scipy.stats import entropy
 
 def ngram(no_cuda: bool, id: str, vocab_size: int):
+    res = {
+        "unigram_entropy": [],
+        "bigram_entropy": [],
+    }
     device = torch.device("cuda" if (not no_cuda and torch.cuda.is_available()) else "cpu")
 
     # load input data
@@ -38,13 +44,11 @@ def ngram(no_cuda: bool, id: str, vocab_size: int):
 
     # calculate unigram
     counts_unigram = [[0 for _ in range(vocab_size)] for _ in range(len(senders))]
-    n_words = [0 for _ in range(len(senders))]
     for i in range(len(senders)):
         sequence = sequences[i]
         for sentence in sequence:
             for word in sentence:
                 counts_unigram[i][word.item() - 1] += 1
-                n_words[i] += 1
 
     # visualize unigram
     # graph of the counts for each word
@@ -74,6 +78,10 @@ def ngram(no_cuda: bool, id: str, vocab_size: int):
     plt.hist(counts_unigram, stacked=False, label=labels)
     plt.legend()
     plt.savefig(f"result_graph/{id}/unigram_histogram.png")
+
+    # calculate unigram entropy
+    for count in counts_unigram:
+        res["unigram_entropy"].append(entropy(count, base=2))
 
     ##################
     #     bigram     #
@@ -128,3 +136,9 @@ def ngram(no_cuda: bool, id: str, vocab_size: int):
     plt.hist(counts_bigram, stacked=False, label=labels, bins=30)
     plt.legend()
     plt.savefig(f"result_graph/{id}/bigram_histogram.png")
+
+    # calculate unigram entropy
+    for count in counts_bigram:
+        res["bigram_entropy"].append(entropy(count, base=2))
+
+    return res
