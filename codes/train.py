@@ -8,9 +8,10 @@ import torch
 from torch.utils.data import DataLoader
 import egg.core as core
 from data import enumerate_attribute_value, split_train_test, one_hotify, ScaledDataset
-from archs import Sender, Receiver, PlusOneWrapper
+from archs import Sender, Receiver, PlusOneWrapper, Freezer
 from loss import DiffLoss
 import pickle
+import copy
 
 def get_params(params):
     parser = argparse.ArgumentParser()
@@ -47,6 +48,8 @@ def get_params(params):
 def main(params):
     opts = get_params(params)
     device = opts.device
+    freezed_senders = []
+    freezed_receivers = []
 
     # print settings
     print(opts)
@@ -171,6 +174,8 @@ def main(params):
         torch.save(senders[i], f"model/{opts.id}/L_{i+1}-sender.pth")
         torch.save(receivers[i], f"model/{opts.id}/L_{i+1}-receiver.pth")
         print("Done!")
+        freezed_senders.append(Freezer(copy.deepcopy(senders[i])))
+        freezed_receivers.append(Freezer(copy.deepcopy(receivers[i])))
 
     # contact languages setup
     contact_losses = [DiffLoss(opts.n_attributes, opts.n_values) for _ in range(2)]
@@ -219,6 +224,114 @@ def main(params):
         torch.save(senders[i], f"model/{opts.id}/L_{i+3}-sender.pth")
         torch.save(receivers[i], f"model/{opts.id}/L_{i+3}-receiver.pth")
         print("Done!")
+        freezed_senders.append(Freezer(copy.deepcopy(senders[i])))
+        freezed_receivers.append(Freezer(copy.deepcopy(receivers[i])))
+
+    # Finally, calculate the ease of learning
+
+    # make a new Sender and a new Receiver
+    sender = Sender(n_inputs=n_dim, n_hidden=opts.sender_hidden)
+    sender = core.RnnSenderReinforce(
+        agent=sender,
+        vocab_size=opts.vocab_size,
+        embed_dim=opts.sender_emb,
+        hidden_size=opts.sender_hidden,
+        max_len=opts.max_len,
+        force_eos=False,
+        cell=opts.sender_cell
+    )
+    sender = PlusOneWrapper(sender)
+    receiver = Receiver(n_hidden=opts.receiver_hidden, n_outputs=n_dim)
+    receiver = core.RnnReceiverDeterministic(
+        receiver,
+        opts.vocab_size + 1,
+        opts.receiver_emb,
+        opts.receiver_hidden,
+        cell=opts.receiver_cell
+    )
+
+    # training
+    new_pairs = [
+        {
+            # P_{1, newS}
+            'protocol_name': 'L_5',
+            'sender': copy.deepcopy(sender),
+            'receiver': freezed_receivers[0],
+        },
+        {
+            # P_{1, newR}
+            'protocol_name': 'L_6',
+            'sender': freezed_senders[0],
+            'receiver': copy.deepcopy(receiver),
+        },
+        {
+            # P_{2, newS}
+            'protocol_name': 'L_7',
+            'sender': copy.deepcopy(sender),
+            'receiver': freezed_receivers[1],
+        },
+        {
+            # P_{2, newR}
+            'protocol_name': 'L_8',
+            'sender': freezed_senders[1],
+            'receiver': copy.deepcopy(receiver),
+        },
+        {
+            # P_{3, newS}
+            'protocol_name': 'L_9',
+            'sender': copy.deepcopy(sender),
+            'receiver': freezed_receivers[2],
+        },
+        {
+            # P_{3, newR}
+            'protocol_name': 'L_10',
+            'sender': freezed_senders[2],
+            'receiver': copy.deepcopy(receiver),
+        },
+        {
+            # P_{4, newS}
+            'protocol_name': 'L_11',
+            'sender': copy.deepcopy(sender),
+            'receiver': freezed_receivers[3],
+        },
+        {
+            # P_{4, newR}
+            'protocol_name': 'L_12',
+            'sender': freezed_senders[3],
+            'receiver': copy.deepcopy(receiver),
+        },
+    ]
+    for new_pair in new_pairs:
+        loss = DiffLoss(opts.n_attributes, opts.n_values)
+        baseline = {
+            'no': core.baselines.NoBaseline, 
+            'mean': core.baselines.MeanBaseline, 
+            'builtin': core.baselines.BuiltInBaseline
+        }[opts.baseline]
+        game = core.SenderReceiverRnnReinforce(
+            new_pair['sender'],
+            new_pair['receiver'],
+            loss,
+            sender_entropy_coeff=opts.sender_entropy_coeff,
+            receiver_entropy_coeff=0.0,
+            length_cost=0.0,
+            baseline_type=baseline,
+        )
+        optimizer = torch.optim.Adam(game.parameters(), lr=opts.lr)
+        early_stopper = core.EarlyStopperAccuracy(opts.early_stopping_thr, validation=False)
+        trainer = core.Trainer(
+            game=game,
+            optimizer=optimizer,
+            train_data=train_loader,
+            validation_data=test_loader,
+            callbacks=[
+                core.ConsoleLogger(as_json=True, print_train_loss=False),
+                early_stopper,
+            ]
+        )
+        print(f'--------------------{new_pair["protocol_name"]} training start--------------------')
+        trainer.train(n_epochs=opts.n_epochs)
+        print(f'--------------------{new_pair["protocol_name"]} training end--------------------')
 
     print('--------------------End--------------------')
 

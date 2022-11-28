@@ -7,12 +7,13 @@ from entropy import entropy
 from ngram import ngram
 from topsim import topsim
 from generalizability import generalizability
+from ease_of_learning import ease_of_learning
 
 # --training start--から--training end--の中にあるデータをまとめてL_dataとして返す
 def extract_one_model_data(pattern, raw_text, L_data):
     result = re.search(pattern, raw_text)
     if not result:
-        raise ValueError()
+        raise ValueError(pattern)
     for epoch in re.compile(
         r"\{\"mode\": \"(.*?)\", \"epoch\": (.*?), \"loss\": (.*?), \"acc\": (.*?), \"acc_or\": (.*?), \"sender_entropy\": (.*?), \"receiver_entropy\": (.*?), \"original_loss\": (.*?), \"mean_length\": (.*?)\}"
     ).finditer(result.group(1)):
@@ -79,45 +80,21 @@ def main(file_path: str):
     }
 
     # extract result
-    L_1_data = {
-        "train": [],
-        "test": [],
-    }
-    extract_one_model_data(
-        re.compile(r"--------------------L_1 training start--------------------((.|\s)*?)--------------------L_1 training end--------------------"),
-        raw_text,
-        L_1_data
-    )
-    L_2_data = {
-        "train": [],
-        "test": [],
-    }
-    extract_one_model_data(
-        re.compile(r"--------------------L_2 training start--------------------((.|\s)*?)--------------------L_2 training end--------------------"),
-        raw_text,
-        L_2_data
-    )
-    L_3_data = {
-        "train": [],
-        "test": [],
-    }
-    extract_one_model_data(
-        re.compile(r"--------------------L_3 training start--------------------((.|\s)*?)--------------------L_3 training end--------------------"),
-        raw_text,
-        L_3_data
-    )
-    L_4_data = {
-        "train": [],
-        "test": [],
-    }
-    extract_one_model_data(
-        re.compile(r"--------------------L_4 training start--------------------((.|\s)*?)--------------------L_4 training end--------------------"),
-        raw_text,
-        L_4_data
-    )
+    L_data = [
+        {
+            "train": [],
+            "test": [],
+        } for _ in range(12)
+    ]
+    for i in range(12):
+        extract_one_model_data(
+            re.compile(r"--------------------L_{0} training start--------------------((.|\s)*?)--------------------L_{0} training end--------------------".format(i+1)),
+            raw_text,
+            L_data[i],
+        )
 
     # entropy
-    entropy(config['id'], L_1_data, L_2_data, L_3_data, L_4_data)
+    entropy(config['id'], L_data[0], L_data[1], L_data[2], L_data[3])
 
     # ngram
     ngram_entropy = ngram(config["no_cuda"] == "True", config['id'], int(config['vocab_size']))
@@ -126,7 +103,10 @@ def main(file_path: str):
     topsim_result = topsim(config["no_cuda"] == "True", config['id'], int(config['n_attributes']), int(config['max_len']))
 
     # generalizability
-    generalizability(config['id'], L_1_data, L_2_data, L_3_data, L_4_data)
+    generalizability(config['id'], L_data[0], L_data[1], L_data[2], L_data[3])
+
+    # ease of learning
+    ease_of_learning(config['id'], L_data[4:])
 
     # make markdown
     f = open(f"result_md/{file_name}.md", "w")

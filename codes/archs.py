@@ -27,3 +27,18 @@ class PlusOneWrapper(nn.Module):
     def forward(self, *input):
         r1, r2, r3 = self.wrapped(*input)
         return r1 + 1, r2, r3
+
+class Freezer(nn.Module):
+    def __init__(self, wrapped):
+        super().__init__()
+        self.wrapped = wrapped
+        self.wrapped.eval()
+
+        for p in self.wrapped.parameters():
+            p.requires_grad = False
+
+    def train(self, mode):
+        pass
+
+    def forward(self, *input):
+        return self.wrapped(*input)

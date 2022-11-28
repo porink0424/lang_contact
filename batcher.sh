@@ -4,15 +4,15 @@
 # 自分で決める変数
 mode=1 # 1: random_seedをいろいろ変えながら実行、0: 1つだけ実行
 start=1 # mode=1のときのみ使用
-end=4 # mode=1のときのみ使用
+end=10 # mode=1のときのみ使用
 random_seed=1 # mode=0のときのみ使用
 partition="p"
-comment="新たな実験へ" # 結果ファイルにコメントとして残される、NOTE: 空白をコメントに入れるとバグる
-natt=4
-nval=5
-cvoc=10
-clen=4
-epoch=100
+comment="学習のしやすさも含めて計算" # 結果ファイルにコメントとして残される、NOTE: 空白をコメントに入れるとバグる
+natt=2
+nval=50
+cvoc=100
+clen=6
+epoch=4000
 early_stopping_thr=1.0001 # early stoppingなし
 sender_entropy_coeff=0.5
 
@@ -27,11 +27,16 @@ lr=0.001
 receiver_emb=30
 sender_emb=5
 
+gres=""
+if [ $partition = "p" ] || [ $partition = "v" ]; then
+    gres="--gres=gpu:1"
+fi
+
 if [ $mode -eq 1 ]; then
     # random seedを変えながら連続でバッチする
     for random_seed_iter in $(seq $start $end); do
         id=$(date +%Y%m%d%H%M%S)
-        sbatch -p $partition -o ./log/out_%j-job.log job.sh \
+        sbatch $gres -p $partition -o ./log/out_%j-job.log job.sh \
             $id $comment $natt $nval $cvoc $clen \
             $batch_size $data_scaler $epoch \
             $sender_hidden $receiver_hidden \
@@ -44,7 +49,7 @@ if [ $mode -eq 1 ]; then
 else
     # 1つだけバッチする
     id=$(date +%Y%m%d%H%M%S)
-    sbatch -p $partition -o ./log/out_%j-job.log job.sh \
+    sbatch $gres -p $partition -o ./log/out_%j-job.log job.sh \
         $id $comment $natt $nval $cvoc $clen \
         $batch_size $data_scaler $epoch \
         $sender_hidden $receiver_hidden \
