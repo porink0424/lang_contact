@@ -1,6 +1,5 @@
 # file for casual use
-ex.txt
-ex.sh
+memo.*
 
 # files related to pycache
 *.pyc
