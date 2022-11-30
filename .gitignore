@@ -7,15 +7,13 @@ ex.sh
 
 # outputs files
 log/*
-!log/.gitkeep
 model/*
-!model/.gitkeep
 result/*
-!result/.gitkeep
 result_graph/*
-!result_graph/.gitkeep
 result_md/*
-!result_md/.gitkeep
+averaged_result/*
+
+!*/.gitkeep
 
 # config
 .vscode/*
