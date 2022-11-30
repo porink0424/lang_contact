@@ -6,7 +6,6 @@ def entropy(id: str, L_1_data, L_2_data, L_3_data, L_4_data):
     plt.title("Sender Entropy")
     plt.xlabel("epochs")
     plt.ylabel("entropy value")
-    print(L_1_data, L_3_data)
     L_1 = plt.plot(
         np.array([i+1 for i in range(len(L_1_data["test"]))]), np.array([float(data["sender_entropy"]) for data in L_1_data['test']]),
     )

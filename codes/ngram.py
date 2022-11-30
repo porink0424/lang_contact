@@ -42,33 +42,19 @@ def ngram(no_cuda: bool, id: str, vocab_size: int):
                 counts_unigram[i][word.item() - 1] += 1
 
     # visualize unigram
-    # graph of the counts for each word
-    fig, axs = plt.subplots(2, 2, facecolor='lightgray')
-    plt.title("Unigram Counts")
-    # extract max count
-    max = 0
-    for i in range(4):
-        for v in counts_unigram[i]:
-            if max < v:
-                max = v
-    for i in range(4):
-        ax = axs[1 if i>=2 else 0, i%2]
-        ax.set_title(f"L_{i+1}")
-        ax.set_xlabel("word")
-        ax.set_ylabel("Count for word")
-        ax.bar([j for j in range(1, vocab_size+1)], counts_unigram[i])
-        ax.set_ylim([0, max+1])
-        ax.label_outer()
-    plt.savefig(f"result_graph/{id}/unigram_count.png")
-    # histogram of the counts
     plt.figure(facecolor='lightgray')
-    plt.title("Unigram Counts Histogram")
-    plt.xlabel("Counts")
-    plt.ylabel("Counts of Counts")
-    labels = ["L_1", "L_2", "L_3", "L_4"]
-    plt.hist(counts_unigram, stacked=False, label=labels)
-    plt.legend()
-    plt.savefig(f"result_graph/{id}/unigram_histogram.png")
+    plt.title("Unigram Counts")
+    plt.xlabel("Rank")
+    plt.ylabel("Counts")
+    L_1_to_4 = []
+    for i in range(len(senders)):
+        sorted_count_unigram = sorted(counts_unigram[i], reverse=True)
+        L_1_to_4.append(plt.plot(
+            np.array([i+1 for i in range(len(sorted_count_unigram))]),
+            np.array(sorted_count_unigram),
+        ))
+    plt.legend(L_1_to_4, ("L_1", "L_2", "L_3", "L_4"), loc=1)
+    plt.savefig(f"result_graph/{id}/ngram_unigram.png")
 
     # calculate unigram entropy
     for count in counts_unigram:
@@ -100,33 +86,19 @@ def ngram(no_cuda: bool, id: str, vocab_size: int):
                 n_word_pairs[i] += 1
 
     # visualize bigram
-    # graph of the counts for each word pair
-    fig, axs = plt.subplots(2, 2, facecolor='lightgray')
-    plt.title("Bigram Counts")
-    # extract max count
-    max = 0
-    for i in range(4):
-        for v in counts_bigram[i]:
-            if max < v:
-                max = v
-    for i in range(4):
-        ax = axs[1 if i>=2 else 0, i%2]
-        ax.set_title(f"L_{i+1}")
-        ax.set_xlabel("word pair")
-        ax.set_ylabel("Count for word pair")
-        ax.bar([j for j in range(len(counts_bigram[i]))], counts_bigram[i])
-        ax.set_ylim([0, max+1])
-        ax.label_outer()
-    plt.savefig(f"result_graph/{id}/bigram_count.png")
-    # histogram of the counts
     plt.figure(facecolor='lightgray')
-    plt.title("Bigram Counts Histogram")
-    plt.xlabel("Counts")
-    plt.ylabel("Counts of Counts")
-    labels = ["L_1", "L_2", "L_3", "L_4"]
-    plt.hist(counts_bigram, stacked=False, label=labels, bins=30)
-    plt.legend()
-    plt.savefig(f"result_graph/{id}/bigram_histogram.png")
+    plt.title("Bigram Counts")
+    plt.xlabel("Rank")
+    plt.ylabel("log(Counts)")
+    L_1_to_4 = []
+    for i in range(len(senders)):
+        sorted_count_bigram = sorted(counts_bigram[i], reverse=True)
+        L_1_to_4.append(plt.plot(
+            np.array([i+1 for i in range(len(sorted_count_bigram))]),
+            np.log(np.array(sorted_count_bigram)),
+        ))
+    plt.legend(L_1_to_4, ("L_1", "L_2", "L_3", "L_4"), loc=1)
+    plt.savefig(f"result_graph/{id}/ngram_bigram.png")
 
     # calculate unigram entropy
     for count in counts_bigram:
