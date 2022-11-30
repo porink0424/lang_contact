@@ -3,17 +3,17 @@
 
 # 自分で決める変数
 mode=1 # 1: random_seedをいろいろ変えながら実行、0: 1つだけ実行
-start=1 # mode=1のときのみ使用
+start=10 # mode=1のときのみ使用
 end=10 # mode=1のときのみ使用
 random_seed=1 # mode=0のときのみ使用
 partition="p"
-comment="学習のしやすさも含めて計算" # 結果ファイルにコメントとして残される、NOTE: 空白をコメントに入れるとバグる
-natt=2
-nval=50
-cvoc=100
-clen=6
-epoch=4000
-early_stopping_thr=1.0001 # early stoppingなし
+comment="test" # 結果ファイルにコメントとして残される、NOTE: 空白をコメントに入れるとバグる
+natt=4
+nval=4
+cvoc=5
+clen=4
+epoch=5
+early_stopping_thr=0.9
 sender_entropy_coeff=0.5
 
 # 基本的に変えない変数

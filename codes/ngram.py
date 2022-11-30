@@ -12,17 +12,11 @@ def ngram(no_cuda: bool, id: str, vocab_size: int):
     device = torch.device("cuda" if (not no_cuda and torch.cuda.is_available()) else "cpu")
 
     # load input data
-    # TODO: もともと使っていたinputだけを使うべきか？
     with open(f"model/{id}/train.txt", "rb") as file_train:
         train_data = pickle.load(file_train)
         for i in range(len(train_data)):
             train_data[i] = train_data[i].tolist()
         train_data = torch.tensor(train_data).to(device)
-    with open(f"model/{id}/test.txt", "rb") as file_test:
-        test_data = pickle.load(file_test)
-        for i in range(len(test_data)):
-            test_data[i] = test_data[i].tolist()
-        test_data = torch.tensor(test_data).to(device)
 
     # load model
     sequences = []

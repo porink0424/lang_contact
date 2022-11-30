@@ -14,6 +14,7 @@ def extract_one_model_data(pattern, raw_text, L_data):
     result = re.search(pattern, raw_text)
     if not result:
         raise ValueError(pattern)
+    
     for epoch in re.compile(
         r"\{\"mode\": \"(.*?)\", \"epoch\": (.*?), \"loss\": (.*?), \"acc\": (.*?), \"acc_or\": (.*?), \"sender_entropy\": (.*?), \"receiver_entropy\": (.*?), \"original_loss\": (.*?), \"mean_length\": (.*?)\}"
     ).finditer(result.group(1)):
@@ -26,10 +27,19 @@ def extract_one_model_data(pattern, raw_text, L_data):
             'original_loss': epoch.group(8),
             'mean_length': epoch.group(9),
         }
-        if epoch.group(1) == "train":
-            L_data["train"].append(data)
-        else:
+        if epoch.group(1) == "test":
             L_data["test"].append(data)
+        else:
+            raise ValueError()
+    
+    for epoch in re.compile(
+        r"\{\"generalization\": \{\"acc\": (.*?), \"acc_or\": (.*?)\}, \"epoch\": (.*?)\}"
+    ).finditer(result.group(1)):
+        data = {
+            'acc': epoch.group(1),
+            'acc_or': epoch.group(2),
+        }
+        L_data["generalization"].append(data)
 
 def main(file_path: str):
     f = open(file_path, 'r')
@@ -82,8 +92,8 @@ def main(file_path: str):
     # extract result
     L_data = [
         {
-            "train": [],
             "test": [],
+            "generalization": [],
         } for _ in range(12)
     ]
     for i in range(12):
@@ -92,6 +102,24 @@ def main(file_path: str):
             raw_text,
             L_data[i],
         )
+    
+    # change of acc
+    plt.figure(facecolor='lightgray')
+    plt.title("Change of Acc")
+    plt.xlabel("epochs")
+    plt.ylabel("acc")
+    plots = (
+        plt.plot(
+            np.array([i+1 for i in range(len(L_data[j]["test"]))]), np.array([float(data["acc"]) for data in L_data[j]["test"]])
+        ) for j in range(4)
+    )
+    plt.legend((plot[0] for plot in plots), (f"L_{i}" for i in range(1, 4+1)), loc=2)
+    import os
+    try:
+        os.mkdir(f"result_graph/{config['id']}")
+    except FileExistsError:
+        pass
+    plt.savefig(f"result_graph/{config['id']}/change_of_acc.png")
 
     # entropy
     entropy(config['id'], L_data[0], L_data[1], L_data[2], L_data[3])
@@ -141,7 +169,7 @@ def main(file_path: str):
 
     # 関連する全てのグラフ画像を取り出す
     md_text += f"### Graphs\n\n"
-    files = glob.glob(f"./result_graph/{config['id']}/*")
+    files = sorted(glob.glob(f"./result_graph/{config['id']}/*"))
     for file in files:
         md_text += f"![{file[1:]}]({file[1:]})\n\n"
     f.write(md_text)
