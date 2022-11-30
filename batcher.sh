@@ -1,11 +1,9 @@
 #!/bin/bash
-# NOTE: egg36なるconda環境で、`sh batcher.sh`で実行
+# NOTE: egg36なるconda環境で、`bash batcher.sh`で実行
 
 # 自分で決める変数
-mode=1 # 1: random_seedをいろいろ変えながら実行、0: 1つだけ実行
-start=10 # mode=1のときのみ使用
-end=10 # mode=1のときのみ使用
-random_seed=1 # mode=0のときのみ使用
+start=10
+end=14
 partition="p"
 comment="test" # 結果ファイルにコメントとして残される、NOTE: 空白をコメントに入れるとバグる
 natt=4
@@ -32,29 +30,21 @@ if [ $partition = "p" ] || [ $partition = "v" ]; then
     gres="--gres=gpu:1"
 fi
 
-if [ $mode -eq 1 ]; then
-    # random seedを変えながら連続でバッチする
-    for random_seed_iter in $(seq $start $end); do
-        id=$(date +%Y%m%d%H%M%S)
-        sbatch $gres -p $partition -o ./log/out_%j-job.log job.sh \
-            $id $comment $natt $nval $cvoc $clen \
-            $batch_size $data_scaler $epoch \
-            $sender_hidden $receiver_hidden \
-            $sender_entropy_coeff $random_seed_iter \
-            $sender_cell $receiver_cell \
-            $lr $receiver_emb $sender_emb \
-            $early_stopping_thr
-        sleep 1
-    done
-else
-    # 1つだけバッチする
+# random seedを変えながら連続でバッチする
+for random_seed_iter in $(seq $start $end); do
     id=$(date +%Y%m%d%H%M%S)
     sbatch $gres -p $partition -o ./log/out_%j-job.log job.sh \
         $id $comment $natt $nval $cvoc $clen \
         $batch_size $data_scaler $epoch \
         $sender_hidden $receiver_hidden \
-        $sender_entropy_coeff $random_seed \
+        $sender_entropy_coeff $random_seed_iter \
         $sender_cell $receiver_cell \
         $lr $receiver_emb $sender_emb \
         $early_stopping_thr
-fi
+    ids[$random_seed_iter]=$id
+    sleep 1
+done
+
+# 全てのidを出力する
+echo "List of id:"
+echo ${ids[@]}
