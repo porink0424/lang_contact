@@ -53,7 +53,7 @@ def ngram(no_cuda: bool, id: str, vocab_size: int):
             np.array([i+1 for i in range(len(sorted_count_unigram))]),
             np.array(sorted_count_unigram),
         ))
-    plt.legend(L_1_to_4, ("L_1", "L_2", "L_3", "L_4"), loc=1)
+    plt.legend((l[0] for l in L_1_to_4), ("L_1", "L_2", "L_3", "L_4"), loc=1)
     plt.savefig(f"result_graph/{id}/ngram_unigram.png")
 
     # calculate unigram entropy
@@ -93,11 +93,12 @@ def ngram(no_cuda: bool, id: str, vocab_size: int):
     L_1_to_4 = []
     for i in range(len(senders)):
         sorted_count_bigram = sorted(counts_bigram[i], reverse=True)
-        L_1_to_4.append(plt.plot(
-            np.array([i+1 for i in range(len(sorted_count_bigram))]),
-            np.log(np.array(sorted_count_bigram)),
-        ))
-    plt.legend(L_1_to_4, ("L_1", "L_2", "L_3", "L_4"), loc=1)
+        with np.errstate(divide="ignore"):
+            L_1_to_4.append(plt.plot(
+                np.array([i+1 for i in range(len(sorted_count_bigram))]),
+                np.log(np.array(sorted_count_bigram)),
+            ))
+    plt.legend((l[0] for l in L_1_to_4), ("L_1", "L_2", "L_3", "L_4"), loc=1)
     plt.savefig(f"result_graph/{id}/ngram_bigram.png")
 
     # calculate unigram entropy
