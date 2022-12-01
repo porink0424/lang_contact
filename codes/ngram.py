@@ -44,15 +44,16 @@ def ngram(no_cuda: bool, id: str, vocab_size: int):
     # visualize unigram
     plt.figure(facecolor='lightgray')
     plt.title("Unigram Counts")
-    plt.xlabel("Rank")
-    plt.ylabel("Counts")
+    plt.xlabel("log(Rank)")
+    plt.ylabel("log(Counts)")
     L_1_to_4 = []
     for i in range(len(senders)):
         sorted_count_unigram = sorted(counts_unigram[i], reverse=True)
-        L_1_to_4.append(plt.plot(
-            np.array([i+1 for i in range(len(sorted_count_unigram))]),
-            np.array(sorted_count_unigram),
-        ))
+        with np.errstate(divide="ignore"):
+            L_1_to_4.append(plt.plot(
+                np.array([np.log(i+1) for i in range(len(sorted_count_unigram))]),
+                np.log(np.array(sorted_count_unigram)),
+            ))
     plt.legend((l[0] for l in L_1_to_4), ("L_1", "L_2", "L_3", "L_4"), loc=1)
     plt.savefig(f"result_graph/{id}/ngram_unigram.png")
 
@@ -88,14 +89,14 @@ def ngram(no_cuda: bool, id: str, vocab_size: int):
     # visualize bigram
     plt.figure(facecolor='lightgray')
     plt.title("Bigram Counts")
-    plt.xlabel("Rank")
+    plt.xlabel("log(Rank)")
     plt.ylabel("log(Counts)")
     L_1_to_4 = []
     for i in range(len(senders)):
         sorted_count_bigram = sorted(counts_bigram[i], reverse=True)
         with np.errstate(divide="ignore"):
             L_1_to_4.append(plt.plot(
-                np.array([i+1 for i in range(len(sorted_count_bigram))]),
+                np.array([np.log(i+1) for i in range(len(sorted_count_bigram))]),
                 np.log(np.array(sorted_count_bigram)),
             ))
     plt.legend((l[0] for l in L_1_to_4), ("L_1", "L_2", "L_3", "L_4"), loc=1)
