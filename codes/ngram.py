@@ -66,25 +66,13 @@ def ngram(no_cuda: bool, id: str, vocab_size: int):
     ##################
 
     # calculate bigram
-    # 0 ~ vocab_size-1: indices of words,
-    # vocab_size: index of BOS
-    # vocab_size+1: index of EOS
-    # (w_1, w_2) <-> w_1 * (vocab_size+2) + w_2
-    counts_bigram = [[0 for _ in range((vocab_size+2) * (vocab_size+2))] for _ in range(len(senders))]
-    n_word_pairs = [0 for _ in range(len(senders))]
+    # (w_1, w_2) <-> w_1 * vocab_size + w_2
+    counts_bigram = [[0 for _ in range(vocab_size * vocab_size)] for _ in range(len(senders))]
     for i in range(len(senders)):
         sequence = sequences[i]
         for sentence in sequence:
-            for j in range(-1, len(sentence)):
-                if j == -1:
-                    # w_1 is BOS
-                    counts_bigram[i][vocab_size * (vocab_size+2) + (sentence[j+1].item() - 1)] += 1
-                elif j == len(sentence) - 1:
-                    # w_2 is EOS
-                    counts_bigram[i][(sentence[j].item() - 1) * (vocab_size+2) + (vocab_size+1)] += 1
-                else:
-                    counts_bigram[i][(sentence[j].item() - 1) * (vocab_size+2) + (sentence[j+1].item() - 1)] += 1
-                n_word_pairs[i] += 1
+            for j in range(len(sentence) - 1):
+                counts_bigram[i][(sentence[j].item() - 1) * vocab_size + (sentence[j+1].item() - 1)] += 1
 
     # visualize bigram
     plt.figure(facecolor='lightgray')
