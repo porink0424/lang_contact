@@ -39,7 +39,8 @@ def ngram_averaged_entropy(ids):
     plt.bar(
         ["L_1", "L_2", "L_3", "L_4"],
         [np.average(L_data[i]["unigram"]) for i in range(4)],
-        yerr=[np.std(L_data[i]["unigram"]) for i in range(4)],
+        yerr=[np.std(L_data[i]["unigram"]) / np.sqrt(len(ids)) for i in range(4)],
+        capsize=10,
     )
     plt.savefig(f"averaged_result/{ids[0]}~{ids[-1]}/unigram_entropy.png")
 
@@ -49,7 +50,8 @@ def ngram_averaged_entropy(ids):
     plt.bar(
         ["L_1", "L_2", "L_3", "L_4"],
         [np.average(L_data[i]["bigram"]) for i in range(4)],
-        yerr=[np.std(L_data[i]["bigram"]) for i in range(4)],
+        yerr=[np.std(L_data[i]["bigram"]) / np.sqrt(len(ids)) for i in range(4)],
+        capsize=10,
     )
     plt.savefig(f"averaged_result/{ids[0]}~{ids[-1]}/bigram_entropy.png")
 
@@ -83,7 +85,8 @@ def topsim_averaged_topsim(ids):
     plt.bar(
         ["L_1", "L_2", "L_3", "L_4"],
         [np.average(L_data[i]["topsim"]) for i in range(4)],
-        yerr=[np.std(L_data[i]["topsim"]) for i in range(4)],
+        yerr=[np.std(L_data[i]["topsim"]) / np.sqrt(len(ids)) for i in range(4)],
+        capsize=10,
     )
     plt.savefig(f"averaged_result/{ids[0]}~{ids[-1]}/topsim.png")
 
