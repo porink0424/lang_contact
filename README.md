@@ -1,5 +1,10 @@
 # Language Contact
 
+## Run
+
+- batcher.sh: random seedを変えて、学習を進め、データをresultに吐き出す。また、1つごとにデータを整形したmdファイルを生成する。
+- average.sh: 指定したidの中で、平均をとり、平均化された結果をaveraged_resultに吐き出す。
+
 ## commit message prefix
 
 - feat: 新しい機能
