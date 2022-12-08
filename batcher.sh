@@ -2,15 +2,15 @@
 # NOTE: egg36なるconda環境で、`bash batcher.sh`で実行
 
 # 自分で決める変数
-start=3
-end=5
-partition="big"
+start=1
+end=3
+partition="p"
 comment="test" # 結果ファイルにコメントとして残される、NOTE: 空白をコメントに入れるとバグる
 natt=4
 nval=4
 cvoc=5
 clen=4
-epoch=6
+epoch=4
 early_stopping_thr=0.99
 sender_entropy_coeff=0.5
 

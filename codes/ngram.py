@@ -40,6 +40,10 @@ def ngram(no_cuda: bool, id: str, vocab_size: int):
         for sentence in sequence:
             for word in sentence:
                 counts_unigram[i][word.item() - 1] += 1
+    
+    f = open(f"model/{id}/counts_unigram.txt", "wb")
+    pickle.dump(counts_unigram, f)
+    f.close()
 
     # visualize unigram
     plt.figure(facecolor='lightgray')
@@ -73,6 +77,10 @@ def ngram(no_cuda: bool, id: str, vocab_size: int):
         for sentence in sequence:
             for j in range(len(sentence) - 1):
                 counts_bigram[i][(sentence[j].item() - 1) * vocab_size + (sentence[j+1].item() - 1)] += 1
+    
+    f = open(f"model/{id}/counts_bigram.txt", "wb")
+    pickle.dump(counts_bigram, f)
+    f.close()
 
     # visualize bigram
     plt.figure(facecolor='lightgray')

@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import glob
 import re
+import pickle
 from organize_data import extract_one_model_data
 
 def ngram_averaged_entropy(ids):
@@ -208,6 +209,52 @@ def averaged_generalizability(ids, L_datas):
     plt.legend((plot[0] for plot in plots), (f"L_{i}" for i in range(1, 4+1)), loc=2)
     plt.savefig(f"averaged_result/{ids[0]}~{ids[-1]}/generalizability.png")
 
+def averaged_ngram(ids):
+    counts_unigrams = []
+    counts_bigrams = []
+    for id in ids:
+        with open(f"model/{id}/counts_unigram.txt", "rb") as f:
+            counts_unigrams.append(pickle.load(f))
+        with open(f"model/{id}/counts_bigram.txt", "rb") as f:
+            counts_bigrams.append(pickle.load(f))
+    
+    plt.figure(facecolor='lightgray')
+    plt.title("Unigram Counts")
+    plt.xlabel("log(Rank)")
+    plt.ylabel("log(Counts)")
+    vocab_size = len(counts_unigrams[0][0])
+    averaged_sorted_counts_unigrams = [np.array([0.0 for _ in range(vocab_size)]) for _ in range(4)]
+    for i in range(4):
+        with np.errstate(divide="ignore"):
+            for j in range(len(ids)):
+                averaged_sorted_counts_unigrams[i] += np.log(np.array(sorted(counts_unigrams[j][i], reverse=True))) / len(ids)
+    L_1_to_4 = []
+    for i in range(4):
+        L_1_to_4.append(plt.plot(
+            np.array([np.log(j+1) for j in range(len(averaged_sorted_counts_unigrams[i]))]),
+            averaged_sorted_counts_unigrams[i],
+        ))
+    plt.legend((l[0] for l in L_1_to_4), ("L_1", "L_2", "L_3", "L_4"), loc=1)
+    plt.savefig(f"averaged_result/{ids[0]}~{ids[-1]}/ngram_unigram.png")
+
+    plt.figure(facecolor='lightgray')
+    plt.title("Bigram Counts")
+    plt.xlabel("log(Rank)")
+    plt.ylabel("log(Counts)")
+    averaged_sorted_counts_bigrams = [np.array([0.0 for _ in range(vocab_size * vocab_size)]) for _ in range(4)]
+    for i in range(4):
+        with np.errstate(divide="ignore"):
+            for j in range(len(ids)):
+                averaged_sorted_counts_bigrams[i] += np.log(np.array(sorted(counts_bigrams[j][i], reverse=True))) / len(ids)
+    L_1_to_4 = []
+    for i in range(4):
+        L_1_to_4.append(plt.plot(
+            np.array([np.log(j+1) for j in range(len(averaged_sorted_counts_bigrams[i]))]),
+            averaged_sorted_counts_bigrams[i],
+        ))
+    plt.legend((l[0] for l in L_1_to_4), ("L_1", "L_2", "L_3", "L_4"), loc=1)
+    plt.savefig(f"averaged_result/{ids[0]}~{ids[-1]}/ngram_bigram.png")
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('--ids', required=True, nargs="*", type=str)
@@ -228,3 +275,4 @@ if __name__ == "__main__":
     averaged_ease_of_learning_freezed_sender(args.ids, L_datas)
     averaged_entropy(args.ids, L_datas)
     averaged_generalizability(args.ids, L_datas)
+    averaged_ngram(args.ids)

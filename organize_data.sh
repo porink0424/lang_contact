@@ -11,6 +11,6 @@ cvoc=$1; shift
 clen=$1; shift
 
 for id in "$@"; do
-    sbatch -p p --gres=gpu:1 \
+    sbatch -p p -o ./log/out_%j-organize_data.log --gres=gpu:1 \
     --wrap "python codes/organize_data.py result/$id--$natt-$nval-$cvoc-$clen.txt"
 done
