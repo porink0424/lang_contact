@@ -2,8 +2,31 @@
 
 ## Run
 
-- batcher.sh: random seedを変えて、学習を進め、データをresultに吐き出す。また、1つごとにデータを整形したmdファイルを生成する。
-- average.sh: 指定したidの中で、平均をとり、平均化された結果をaveraged_resultに吐き出す。
+### Training
+
+After setting the parameters to `train_batcher.sh`, please run:
+
+```
+bash train_batcher.sh
+```
+
+Then you will get result files in `result` directory.
+
+### Organizing Data
+
+You can make raw result files to visualized results (multiple results at one time) by running:
+
+```
+bash organize_data.sh $natt $nval $cvoc $clen id1 id2 ...
+```
+
+Then you will get the visualized results in `result_md` directory.
+
+### Get averaged results
+
+```
+bash average.sh id1 id2 id3 ...
+```
 
 ## commit message prefix
 
