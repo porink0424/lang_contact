@@ -2,7 +2,6 @@ import torch
 import egg.core as core
 import json
 import time
-from datetime import datetime
 
 def check_cuda():
     if torch.cuda.is_available():
