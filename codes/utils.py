@@ -1,12 +1,24 @@
 import torch
 import egg.core as core
 import json
+import time
+from datetime import datetime
 
 def check_cuda():
     if torch.cuda.is_available():
         print("yes")
     else:
         print("no")
+
+class Timer():
+    def __init__(self, task_name: str):
+        self.task_name = task_name
+    def __enter__(self):
+        self.start = time.time()
+    def __exit__(self, *_ex):
+        diff = time.time() - self.start
+        print(f"task: {self.task_name}")
+        print(f"time: {diff}s")
 
 class Evaluator(core.Callback):
     def __init__(self, loaders, device, freq=1):

@@ -143,7 +143,7 @@ def main(params):
             validation_data=validation_loader,
             callbacks=[
                 core.ConsoleLogger(as_json=True, print_train_loss=False),
-                core.EarlyStopperAccuracy(opts.early_stopping_thr, validation=False),
+                core.EarlyStopperAccuracy(opts.early_stopping_thr, validation=True),
                 Evaluator(
                     [("generalization", test_loader, DiffLoss(opts.n_attributes, opts.n_values))],
                     device,
@@ -192,7 +192,7 @@ def main(params):
             validation_data=validation_loader,
             callbacks=[
                 core.ConsoleLogger(as_json=True, print_train_loss=False),
-                core.EarlyStopperAccuracy(opts.early_stopping_thr, validation=False),
+                core.EarlyStopperAccuracy(opts.early_stopping_thr, validation=True),
                 Evaluator(
                     [("generalization", test_loader, DiffLoss(opts.n_attributes, opts.n_values))],
                     device,
@@ -302,7 +302,7 @@ def main(params):
             validation_data=validation_loader,
             callbacks=[
                 core.ConsoleLogger(as_json=True, print_train_loss=False),
-                core.EarlyStopperAccuracy(opts.early_stopping_thr, validation=False),
+                core.EarlyStopperAccuracy(opts.early_stopping_thr, validation=True),
             ]
         )
         print(f'--------------------L_{lang_idx+5} training start--------------------')
