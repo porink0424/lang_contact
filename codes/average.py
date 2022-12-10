@@ -118,7 +118,7 @@ def get_limit_index(count):
             return i
     return len(count)
 
-def average_change_of_acc(ids, L_raw_datas, limit=False):
+def average_change_of_acc(ids, L_raw_datas):
     plt.figure(facecolor='lightgray')
     plt.title("Change of Acc")
     plt.xlabel("epochs")
@@ -134,15 +134,15 @@ def average_change_of_acc(ids, L_raw_datas, limit=False):
                 acc[k] += float(data["acc"])
                 count[k] += 1
                 std[k].append(float(data["acc"]))
-        limit_index = get_limit_index(count) if limit else max_epochs[j]
+        limit_index = get_limit_index(count)
         acc = np.array([a / c for a, c in zip(acc, count)])[:limit_index]
-        std = np.array([np.std(array, ddof=1) / np.sqrt(c) for array, c in zip(std, count)])[:limit_index]
+        std = np.array([(np.std(array, ddof=1) / np.sqrt(c)) if c >= 2 else 0.0 for array, c in zip(std, count)])[:limit_index]
         plots.append(plt.plot(np.array([i+1 for i in range(max_epochs[j])])[:limit_index], acc))
         plt.fill_between(np.array([i+1 for i in range(max_epochs[j])])[:limit_index], acc+std, acc-std, alpha=0.25)
     plt.legend((plot[0] for plot in plots), ("L_1", "L_2", "L_3", "L_4"), loc=2)
-    plt.savefig(f"averaged_result/{ids[0]}~{ids[-1]}/change_of_acc{'(limited)' if limit else ''}.png")
+    plt.savefig(f"averaged_result/{ids[0]}~{ids[-1]}/change_of_acc.png")
 
-def average_ease_of_learning_freezed_receiver(ids, L_raw_datas, limit=False):
+def average_ease_of_learning_freezed_receiver(ids, L_raw_datas):
     plt.figure(facecolor='lightgray')
     plt.title("Ease of Learning (freezed receiver)")
     plt.xlabel("epochs")
@@ -158,15 +158,15 @@ def average_ease_of_learning_freezed_receiver(ids, L_raw_datas, limit=False):
                 acc[k] += float(data["acc"])
                 count[k] += 1
                 std[k].append(float(data["acc"]))
-        limit_index = get_limit_index(count) if limit else max_epoch
+        limit_index = get_limit_index(count)
         acc = np.array([a / c for a, c in zip(acc, count)])[:limit_index]
-        std = np.array([np.std(array, ddof=1) / np.sqrt(c) for array, c in zip(std, count)])[:limit_index]
+        std = np.array([(np.std(array, ddof=1) / np.sqrt(c)) if c >= 2 else 0.0 for array, c in zip(std, count)])[:limit_index]
         plots.append(plt.plot(np.array([i+1 for i in range(max_epoch)])[:limit_index], acc))
         plt.fill_between(np.array([i+1 for i in range(max_epoch)])[:limit_index], acc+std, acc-std, alpha=0.25)
     plt.legend((plot[0] for plot in plots), ("L_5", "L_7", "L_9", "L_11"), loc=2)
-    plt.savefig(f"averaged_result/{ids[0]}~{ids[-1]}/ease_of_learning_freezed_receiver{'(limited)' if limit else ''}.png")
+    plt.savefig(f"averaged_result/{ids[0]}~{ids[-1]}/ease_of_learning_freezed_receiver.png")
 
-def average_ease_of_learning_freezed_sender(ids, L_raw_datas, limit=False):
+def average_ease_of_learning_freezed_sender(ids, L_raw_datas):
     plt.figure(facecolor='lightgray')
     plt.title("Ease of Learning (freezed sender)")
     plt.xlabel("epochs")
@@ -182,15 +182,15 @@ def average_ease_of_learning_freezed_sender(ids, L_raw_datas, limit=False):
                 acc[k] += float(data["acc"])
                 count[k] += 1
                 std[k].append(float(data["acc"]))
-        limit_index = get_limit_index(count) if limit else max_epoch
+        limit_index = get_limit_index(count)
         acc = np.array([a / c for a, c in zip(acc, count)])[:limit_index]
-        std = np.array([np.std(array, ddof=1) / np.sqrt(c) for array, c in zip(std, count)])[:limit_index]
+        std = np.array([(np.std(array, ddof=1) / np.sqrt(c)) if c >= 2 else 0.0 for array, c in zip(std, count)])[:limit_index]
         plots.append(plt.plot(np.array([i+1 for i in range(max_epoch)])[:limit_index], acc))
         plt.fill_between(np.array([i+1 for i in range(max_epoch)])[:limit_index], acc+std, acc-std, alpha=0.25)
     plt.legend((plot[0] for plot in plots), ("L_6", "L_8", "L_10", "L_12"), loc=2)
-    plt.savefig(f"averaged_result/{ids[0]}~{ids[-1]}/ease_of_learning_freezed_sender{'(limited)' if limit else ''}.png")
+    plt.savefig(f"averaged_result/{ids[0]}~{ids[-1]}/ease_of_learning_freezed_sender.png")
 
-def average_sender_entropy(ids, L_raw_datas, limit=False):
+def average_sender_entropy(ids, L_raw_datas):
     plt.figure(facecolor='lightgray')
     plt.title("Sender Entropy")
     plt.xlabel("epochs")
@@ -206,15 +206,15 @@ def average_sender_entropy(ids, L_raw_datas, limit=False):
                 sender_entropy[k] += float(data["sender_entropy"])
                 count[k] += 1
                 std[k].append(float(data["sender_entropy"]))
-        limit_index = get_limit_index(count) if limit else max_epochs[j]
+        limit_index = get_limit_index(count)
         sender_entropy = np.array([a / c for a, c in zip(sender_entropy, count)])[:limit_index]
-        std = np.array([np.std(array, ddof=1) / np.sqrt(c) for array, c in zip(std, count)])[:limit_index]
+        std = np.array([(np.std(array, ddof=1) / np.sqrt(c)) if c >= 2 else 0.0 for array, c in zip(std, count)])[:limit_index]
         plots.append(plt.plot(np.array([i+1 for i in range(max_epochs[j])])[:limit_index], sender_entropy))
         plt.fill_between(np.array([i+1 for i in range(max_epochs[j])])[:limit_index], sender_entropy+std, sender_entropy-std, alpha=0.25)
     plt.legend((plot[0] for plot in plots), ("L_1", "L_2", "L_3", "L_4"), loc=1)
-    plt.savefig(f"averaged_result/{ids[0]}~{ids[-1]}/entropy{'(limited)' if limit else ''}.png")
+    plt.savefig(f"averaged_result/{ids[0]}~{ids[-1]}/entropy.png")
 
-def average_generalizability(ids, L_raw_datas, limit=False):
+def average_generalizability(ids, L_raw_datas):
     plt.figure(facecolor='lightgray')
     plt.title("Generalizability")
     plt.xlabel("epochs")
@@ -230,13 +230,14 @@ def average_generalizability(ids, L_raw_datas, limit=False):
                 acc[k] += float(data["acc"])
                 count[k] += 1
                 std[k].append(float(data["acc"]))
-        limit_index = get_limit_index(count) if limit else max_epochs[j]
+        limit_index = get_limit_index(count)
         acc = np.array([a / c for a, c in zip(acc, count)])[:limit_index]
-        std = np.array([np.std(array, ddof=1) / np.sqrt(c) for array, c in zip(std, count)])[:limit_index]
+        with np.errstate(all='ignore'):
+            std = np.array([(np.std(array, ddof=1) / np.sqrt(c)) if c >= 2 else 0.0 for array, c in zip(std, count)])[:limit_index]
         plots.append(plt.plot(np.array([i+1 for i in range(max_epochs[j])])[:limit_index], acc))
         plt.fill_between(np.array([i+1 for i in range(max_epochs[j])])[:limit_index], acc+std, acc-std, alpha=0.25)
     plt.legend((plot[0] for plot in plots), ("L_1", "L_2", "L_3", "L_4"), loc=2)
-    plt.savefig(f"averaged_result/{ids[0]}~{ids[-1]}/generalizability{'(limited)' if limit else ''}.png")
+    plt.savefig(f"averaged_result/{ids[0]}~{ids[-1]}/generalizability.png")
 
 def average_ngram_counts(ids):
     counts_unigrams = []
@@ -300,14 +301,9 @@ if __name__ == "__main__":
 
     L_raw_datas = extract_L_raw_datas(args.ids)
     average_change_of_acc(args.ids, L_raw_datas)
-    average_change_of_acc(args.ids, L_raw_datas, limit=True)
     average_ease_of_learning_freezed_receiver(args.ids, L_raw_datas)
-    average_ease_of_learning_freezed_receiver(args.ids, L_raw_datas, limit=True)
     average_ease_of_learning_freezed_sender(args.ids, L_raw_datas)
-    average_ease_of_learning_freezed_sender(args.ids, L_raw_datas, limit=True)
     average_sender_entropy(args.ids, L_raw_datas)
-    average_sender_entropy(args.ids, L_raw_datas, limit=True)
     average_generalizability(args.ids, L_raw_datas)
-    average_generalizability(args.ids, L_raw_datas, limit=True)
 
     average_ngram_counts(args.ids)
