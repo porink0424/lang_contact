@@ -14,7 +14,6 @@ class Receiver(nn.Module):
         super(Receiver, self).__init__()
         self.layer = nn.Linear(n_hidden, n_outputs)
 
-    # TODO: why should we add _ ???
     def forward(self, x, _):
         x = self.layer(x)
         return x

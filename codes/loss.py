@@ -19,6 +19,7 @@ class DiffLoss(nn.Module):
                 dim=1,
             ) == self.n_attributes
         ).float().mean()
+
         acc_or = (receiver_output.argmax(dim=-1) == sender_input.argmax(dim=-1)).float().mean()
 
         receiver_output = receiver_output.view(batch_size * self.n_attributes, self.n_values)

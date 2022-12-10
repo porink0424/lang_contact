@@ -1,6 +1,4 @@
 import re
-import numpy as np
-import matplotlib.pyplot as plt
 import glob
 from tomark import Tomark
 from entropy import entropy
@@ -8,9 +6,11 @@ from ngram import ngram
 from topsim import topsim
 from generalizability import generalizability
 from ease_of_learning import ease_of_learning
+from change_of_acc import change_of_acc
 
-# --training start--から--training end--の中にあるデータをまとめてL_dataとして返す
-def extract_one_model_data(pattern, raw_text, L_data):
+# Extract data from `raw_text` between `--training start--` and `--training end--`,
+# and return as `L_raw_data`.
+def extract_one_model_data(pattern, raw_text, L_raw_data):
     result = re.search(pattern, raw_text)
     if not result:
         raise ValueError(pattern)
@@ -28,7 +28,7 @@ def extract_one_model_data(pattern, raw_text, L_data):
             'mean_length': epoch.group(9),
         }
         if epoch.group(1) == "test":
-            L_data["test"].append(data)
+            L_raw_data["test"].append(data)
         else:
             raise ValueError()
     
@@ -39,7 +39,7 @@ def extract_one_model_data(pattern, raw_text, L_data):
             'acc': epoch.group(1),
             'acc_or': epoch.group(2),
         }
-        L_data["generalization"].append(data)
+        L_raw_data["generalization"].append(data)
 
 def main(file_path: str):
     f = open(file_path, 'r')
@@ -89,8 +89,8 @@ def main(file_path: str):
         'vocab_size': result.group(33),
     }
 
-    # extract result
-    L_data = [
+    # extract results about L_1 ~ L_12
+    L_raw_data = [
         {
             "test": [],
             "generalization": [],
@@ -100,29 +100,14 @@ def main(file_path: str):
         extract_one_model_data(
             re.compile(r"--------------------L_{0} training start--------------------((.|\s)*?)--------------------L_{0} training end--------------------".format(i+1)),
             raw_text,
-            L_data[i],
+            L_raw_data[i],
         )
     
     # change of acc
-    plt.figure(facecolor='lightgray')
-    plt.title("Change of Acc")
-    plt.xlabel("epochs")
-    plt.ylabel("acc")
-    plots = (
-        plt.plot(
-            np.array([i+1 for i in range(len(L_data[j]["test"]))]), np.array([float(data["acc"]) for data in L_data[j]["test"]])
-        ) for j in range(4)
-    )
-    plt.legend((plot[0] for plot in plots), (f"L_{i}" for i in range(1, 4+1)), loc=2)
-    import os
-    try:
-        os.mkdir(f"result_graph/{config['id']}")
-    except FileExistsError:
-        pass
-    plt.savefig(f"result_graph/{config['id']}/change_of_acc.png")
+    change_of_acc(config['id'], L_raw_data)
 
     # entropy
-    entropy(config['id'], L_data[0], L_data[1], L_data[2], L_data[3])
+    entropy(config['id'], L_raw_data)
 
     # ngram
     ngram_entropy = ngram(config["no_cuda"] == "True", config['id'], int(config['vocab_size']))
@@ -131,14 +116,13 @@ def main(file_path: str):
     topsim_result = topsim(config["no_cuda"] == "True", config['id'], int(config['n_attributes']), int(config['max_len']))
 
     # generalizability
-    generalizability(config['id'], L_data[0], L_data[1], L_data[2], L_data[3])
+    generalizability(config['id'], L_raw_data)
 
     # ease of learning
-    ease_of_learning(config['id'], L_data[4:])
+    ease_of_learning(config['id'], L_raw_data)
 
-    # make markdown
+    # make a markdown file as an organized and visualized result
     f = open(f"result_md/{file_name}.md", "w")
-
     transposed_config = []
     for k,v in config.items():
         transposed_config.append({"args": k, "values": v})
@@ -147,7 +131,7 @@ def main(file_path: str):
         + (f"### Comment\n\n{config['comment']}\n\n" if config['comment'] else "") \
         + f"### Setting\n\n{table}\n\n"
     
-    # n-gramのエントロピーに関する情報をつける
+    # Add info related to n-gram entropy
     md_text += f"### N-gram entropy\n\n"
     md_text += "|| unigram | bigram |\n" \
         + "|-----|-----|-----|\n" \
@@ -157,7 +141,7 @@ def main(file_path: str):
         + f"| $L_3$ | {ngram_entropy['unigram_entropy'][2]} | {ngram_entropy['bigram_entropy'][2]} |\n" \
         + f"| $L_4$ | {ngram_entropy['unigram_entropy'][3]} | {ngram_entropy['bigram_entropy'][3]} |\n\n"
     
-    # topsimに関する情報をつける
+    # Add info related to topsim
     md_text += f"### Topsim\n\n"
     md_text += "|| Spearman Correlation |\n" \
         + "|-----|-----|\n" \
@@ -167,7 +151,7 @@ def main(file_path: str):
         + f"| $L_3$ | {topsim_result[2]} |\n" \
         + f"| $L_4$ | {topsim_result[3]} |\n\n"
 
-    # 関連する全てのグラフ画像を取り出す
+    # Add all graphs
     md_text += f"### Graphs\n\n"
     files = sorted(glob.glob(f"./result_graph/{config['id']}/*"))
     for file in files:

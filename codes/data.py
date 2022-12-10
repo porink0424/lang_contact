@@ -7,7 +7,7 @@ def enumerate_attribute_value(n_attributes, n_values):
     return list(itertools.product(*iters))
 
 # split all data into train and test at the rate of p_test
-def split_train_test(dataset, p_test=0.1, random_seed=7):
+def split_train_test(dataset, p_test=0.1, random_seed=1):
     import numpy as np
     random_state = np.random.RandomState(seed=random_seed)
 

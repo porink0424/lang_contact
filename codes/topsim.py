@@ -1,8 +1,9 @@
 import torch
 import pickle
 from scipy.stats import spearmanr
+from typing import List
 
-def topsim(no_cuda: bool, id: str, n_attributes: int, message_length: int):
+def topsim(no_cuda: bool, id: str, n_attributes: int, message_length: int) -> List[float]:
     res = []
     device = torch.device("cuda" if (not no_cuda and torch.cuda.is_available()) else "cpu")
 
@@ -14,18 +15,18 @@ def topsim(no_cuda: bool, id: str, n_attributes: int, message_length: int):
         train_data = torch.tensor(train_data).to(device)
     
     # load model
-    sequences = []
     senders = [
-        torch.load(f"model/{id}/L_{i+1}-sender.pth").eval() for i in range(4)
+        torch.load(f"model/{id}/L_{lang_idx}-sender.pth").eval() for lang_idx in [1,2,3,4]
     ]
 
     # generate messages for all inputs
+    sequences = []
     for sender in senders:
         sequence, _logits, _entropy = sender(train_data)
         sequences.append(sequence)
 
     # calculate Distance
-    for sender_index in range(len(senders)):
+    for sender_index in range(4):
         D_input = []
         D_msg = []
         for i in range(len(train_data)):
@@ -44,7 +45,6 @@ def topsim(no_cuda: bool, id: str, n_attributes: int, message_length: int):
                 D_input.append(count)
 
                 # calculate Edit Distance
-                # 1 wordを1文字と見做す
                 message1 = sequences[sender_index][i]
                 message2 = sequences[sender_index][j]
                 D_msg.append(

@@ -20,9 +20,11 @@ You can make raw result files to visualized results (multiple results at one tim
 bash organize_data.sh $natt $nval $cvoc $clen id1 id2 ...
 ```
 
-Then you will get the visualized results in `result_md` directory.
+Then you will get the visualized results as a markdown file in `result_md` directory.
 
 ### Get averaged results
+
+After making a markdown file, you can calculate averaged results by running:
 
 ```
 bash average.sh id1 id2 id3 ...

@@ -45,6 +45,7 @@ class Evaluator(core.Callback):
         output = json.dumps(self.results)
         print(output, flush=True)
 
+        # reset
         game.loss = old_loss
         game.train()
     

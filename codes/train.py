@@ -1,8 +1,3 @@
-# Copyright (c) Facebook, Inc. and its affiliates.
-
-# This source code is licensed under the MIT license found in the
-# LICENSE file in the root directory of this source tree.
-
 import argparse
 import torch
 from torch.utils.data import DataLoader
@@ -49,8 +44,7 @@ def get_params(params):
 def main(params):
     opts = get_params(params)
     device = opts.device
-    freezed_senders = []
-    freezed_receivers = []
+    senders, receivers, freezed_senders, freezed_receivers = [], [], [], []
 
     # print settings
     print(opts)
@@ -87,8 +81,7 @@ def main(params):
     
     n_dim = opts.n_attributes * opts.n_values
 
-    senders, receivers = [], []
-    for l in range(2):
+    for lang_idx in [1, 2]:
         # make a sender
         if opts.sender_cell in ['lstm', 'rnn', 'gru']:
             # linear layer changes n_inputs to n_hidden
@@ -158,21 +151,21 @@ def main(params):
                 )
             ]
         )
-        print(f'--------------------L_{l+1} training start--------------------')
+        print(f'--------------------L_{lang_idx} training start--------------------')
         trainer.train(n_epochs=opts.n_epochs)
-        print(f'--------------------L_{l+1} training end--------------------')
+        print(f'--------------------L_{lang_idx} training end--------------------')
     
         # save the model
-        print(f"L_{l+1} saving...")
-        torch.save(sender, f"model/{opts.id}/L_{l+1}-sender.pth")
-        torch.save(receiver, f"model/{opts.id}/L_{l+1}-receiver.pth")
+        print(f"L_{lang_idx} saving...")
+        torch.save(sender, f"model/{opts.id}/L_{lang_idx}-sender.pth")
+        torch.save(receiver, f"model/{opts.id}/L_{lang_idx}-receiver.pth")
         print("Done!")
         senders.append(sender)
         receivers.append(receiver)
         freezed_senders.append(Freezer(copy.deepcopy(sender)))
         freezed_receivers.append(Freezer(copy.deepcopy(receiver)))
 
-    for l in range(2):
+    for lang_idx in [3, 4]:
         # contact languages setup
         contact_loss = DiffLoss(opts.n_attributes, opts.n_values)
         contact_baseline = {
@@ -181,8 +174,8 @@ def main(params):
             'builtin': core.baselines.BuiltInBaseline
         }[opts.baseline]
         contact_game = core.SenderReceiverRnnReinforce(
-            senders[l],
-            receivers[0 if l == 1 else 1],
+            senders[lang_idx - 3],
+            receivers[1 if lang_idx == 3 else 0],
             contact_loss,
             sender_entropy_coeff=opts.sender_entropy_coeff,
             receiver_entropy_coeff=0.0,
@@ -207,17 +200,17 @@ def main(params):
                 )
             ]
         )
-        print(f'--------------------L_{l+3} training start--------------------')
+        print(f'--------------------L_{lang_idx} training start--------------------')
         contact_trainer.train(n_epochs=opts.n_epochs)
-        print(f'--------------------L_{l+3} training end--------------------')
+        print(f'--------------------L_{lang_idx} training end--------------------')
 
         # save the model
-        print(f"L_{l+3} saving...")
-        torch.save(senders[l], f"model/{opts.id}/L_{l+3}-sender.pth")
-        torch.save(receivers[l if l == 1 else 1], f"model/{opts.id}/L_{l+3}-receiver.pth")
+        print(f"L_{lang_idx} saving...")
+        torch.save(senders[lang_idx - 3], f"model/{opts.id}/L_{lang_idx}-sender.pth")
+        torch.save(receivers[1 if lang_idx == 3 else 0], f"model/{opts.id}/L_{lang_idx}-receiver.pth")
         print("Done!")
-        freezed_senders.append(Freezer(copy.deepcopy(senders[l])))
-        freezed_receivers.append(Freezer(copy.deepcopy(receivers[l if l == 1 else 1])))
+        freezed_senders.append(Freezer(copy.deepcopy(senders[lang_idx - 3])))
+        freezed_receivers.append(Freezer(copy.deepcopy(receivers[1 if lang_idx == 3 else 0])))
 
     # Finally, calculate the ease of learning
 
@@ -285,7 +278,7 @@ def main(params):
             'receiver': copy.deepcopy(receiver),
         },
     ]
-    for l, new_pair in enumerate(new_pairs):
+    for lang_idx, new_pair in enumerate(new_pairs):
         loss = DiffLoss(opts.n_attributes, opts.n_values)
         baseline = {
             'no': core.baselines.NoBaseline, 
@@ -312,9 +305,9 @@ def main(params):
                 core.EarlyStopperAccuracy(opts.early_stopping_thr, validation=False),
             ]
         )
-        print(f'--------------------L_{l+5} training start--------------------')
+        print(f'--------------------L_{lang_idx+5} training start--------------------')
         trainer.train(n_epochs=opts.n_epochs // 2)
-        print(f'--------------------L_{l+5} training end--------------------')
+        print(f'--------------------L_{lang_idx+5} training end--------------------')
 
     print('--------------------End--------------------')
 

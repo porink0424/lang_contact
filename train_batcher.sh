@@ -11,11 +11,11 @@ start=1
 end=3
 partition="v"
 comment="test" # NOTE: Do not include blank.
-natt=4
-nval=4
-cvoc=5
-clen=4
-epoch=4
+natt=2
+nval=25
+cvoc=100
+clen=8
+epoch=1000
 early_stopping_thr=0.99
 sender_entropy_coeff=0.5
 
