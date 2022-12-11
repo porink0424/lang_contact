@@ -5,30 +5,16 @@ import numpy as np
 from scipy.stats import entropy
 from typing import List, Dict
 
-def ngram(no_cuda: bool, id: str, vocab_size: int) -> Dict[str, List[float]]:
+def ngram(id: str, vocab_size: int) -> Dict[str, List[float]]:
     res = {
         "unigram_entropy": [],
         "bigram_entropy": [],
     }
-    device = torch.device("cuda" if (not no_cuda and torch.cuda.is_available()) else "cpu")
 
-    # load input data
-    with open(f"model/{id}/train.txt", "rb") as file_train:
-        train_data = pickle.load(file_train)
-        for i in range(len(train_data)):
-            train_data[i] = train_data[i].tolist()
-        train_data = torch.tensor(train_data).to(device)
-
-    # load model
-    senders = [
-        torch.load(f"model/{id}/L_{lang_idx}-sender.pth").eval() for lang_idx in [1,2,3,4]
-    ]
-
-    # generate messages for all inputs
-    sequences = []
-    for sender in senders:
-        sequence, _logits, _entropy = sender(train_data)
-        sequences.append(sequence)
+    # load sequences
+    f = open(f"model/{id}/sequences.txt", "rb")
+    sequences = pickle.load(f)
+    f.close()
     
     ###################
     #     unigram     #

@@ -22,6 +22,14 @@ bash organize_data.sh $natt $nval $cvoc $clen id1 id2 ...
 
 Then you will get the visualized results as a markdown file in `result_md` directory.
 
+### [Optinal] topsim
+
+When the input size is big, it may be hard to calculate topsim in GPU environment. If you want to run in the CPU environment, run:
+
+```
+bash topsim.sh id natt nval cvoc clen
+```
+
 ### Get averaged results
 
 After making a markdown file, you can calculate averaged results by running:

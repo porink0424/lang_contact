@@ -8,6 +8,8 @@ from generalizability import generalizability
 from ease_of_learning import ease_of_learning
 from change_of_acc import change_of_acc
 from utils import Timer
+import pickle
+import torch
 
 # Extract data from `raw_text` between `--training start--` and `--training end--`,
 # and return as `L_raw_data`.
@@ -41,6 +43,33 @@ def extract_one_model_data(pattern, raw_text, L_raw_data):
             'acc_or': epoch.group(2),
         }
         L_raw_data["generalization"].append(data)
+
+# Generate sender's outputs and dump to a file
+def generate_sequences(id, no_cuda: bool):
+    device = torch.device("cuda" if (not no_cuda and torch.cuda.is_available()) else "cpu")
+
+    # load input data
+    with open(f"model/{id}/train.txt", "rb") as file_train:
+        train_data = pickle.load(file_train)
+        for i in range(len(train_data)):
+            train_data[i] = train_data[i].tolist()
+        train_data = torch.tensor(train_data).to(device)
+
+    # load model
+    senders = [
+        torch.load(f"model/{id}/L_{lang_idx}-sender.pth").eval() for lang_idx in [1,2,3,4]
+    ]
+
+    # generate messages for all inputs
+    sequences = []
+    for sender in senders:
+        sequence, _logits, _entropy = sender(train_data)
+        sequences.append(sequence.cpu())
+    
+    # dump messages
+    f = open(f"model/{id}/sequences.txt", "wb")
+    pickle.dump(sequences, f)
+    f.close()
 
 def main(file_path: str):
     with Timer("read file"):
@@ -114,14 +143,20 @@ def main(file_path: str):
     # entropy
     with Timer("entropy"):
         entropy(config['id'], L_raw_data)
+    
+    # generate messages and dump to files
+    with Timer("generate messages"):
+        generate_sequences(config['id'], config["no_cuda"] == "True")
 
     # ngram
     with Timer("ngram entropy"):
-        ngram_entropy = ngram(config["no_cuda"] == "True", config['id'], int(config['vocab_size']))
+        ngram_entropy = ngram(config['id'], int(config['vocab_size']))
 
-    # topsim
-    with Timer("topsim"):
-        topsim_result = topsim(config["no_cuda"] == "True", config['id'], int(config['n_attributes']), int(config['max_len']))
+    # ↓ topsim will be calculated in `topsim.sh`, so now will be skipped.
+    # # topsim
+    # with Timer("topsim"):
+    #     topsim_result = topsim(config["no_cuda"] == "True", config['id'], int(config['n_attributes']), int(config['max_len']))
+    topsim_result = [f"L_{i}_topsim_fill_me" for i in [1,2,3,4]]
 
     # generalizability
     with Timer("generalizability"):

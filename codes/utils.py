@@ -16,8 +16,8 @@ class Timer():
         self.start = time.time()
     def __exit__(self, *_ex):
         diff = time.time() - self.start
-        print(f"task: {self.task_name}")
-        print(f"time: {diff}s")
+        print(f"task: {self.task_name}", flush=True)
+        print(f"time: {diff}s", flush=True)
 
 class Evaluator(core.Callback):
     def __init__(self, loaders, device, freq=1):
