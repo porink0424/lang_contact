@@ -27,7 +27,7 @@ Then you will get the visualized results as a markdown file in `result_md` direc
 When the input size is big, it may be hard to calculate topsim in GPU environment. If you want to run in the CPU environment, run:
 
 ```
-bash topsim.sh id natt nval cvoc clen
+bash topsim.sh $natt $nval $cvoc $clen id1 id2 ...
 ```
 
 ### Get averaged results
