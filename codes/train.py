@@ -173,9 +173,11 @@ def main(params):
             'mean': core.baselines.MeanBaseline, 
             'builtin': core.baselines.BuiltInBaseline
         }[opts.baseline]
+        sender = copy.deepcopy(senders[lang_idx - 3])
+        receiver = copy.deepcopy(receivers[1 if lang_idx == 3 else 0])
         contact_game = core.SenderReceiverRnnReinforce(
-            senders[lang_idx - 3],
-            receivers[1 if lang_idx == 3 else 0],
+            sender,
+            receiver,
             contact_loss,
             sender_entropy_coeff=opts.sender_entropy_coeff,
             receiver_entropy_coeff=0.0,
@@ -206,11 +208,161 @@ def main(params):
 
         # save the model
         print(f"L_{lang_idx} saving...")
-        torch.save(senders[lang_idx - 3], f"model/{opts.id}/L_{lang_idx}-sender.pth")
-        torch.save(receivers[1 if lang_idx == 3 else 0], f"model/{opts.id}/L_{lang_idx}-receiver.pth")
+        torch.save(sender, f"model/{opts.id}/L_{lang_idx}-sender.pth")
+        torch.save(receiver, f"model/{opts.id}/L_{lang_idx}-receiver.pth")
         print("Done!")
-        freezed_senders.append(Freezer(copy.deepcopy(senders[lang_idx - 3])))
-        freezed_receivers.append(Freezer(copy.deepcopy(receivers[1 if lang_idx == 3 else 0])))
+        freezed_senders.append(Freezer(copy.deepcopy(sender)))
+        freezed_receivers.append(Freezer(copy.deepcopy(receiver)))
+    
+    # re-train without contacting
+    print("---------------recheck-------------")
+
+
+    for sender_idx in range(2):
+        sender = copy.deepcopy(senders[sender_idx])
+        receiver = Receiver(n_hidden=opts.receiver_hidden, n_outputs=n_dim)
+        receiver = core.RnnReceiverDeterministic(
+            receiver,
+            opts.vocab_size + 1,
+            opts.receiver_emb,
+            opts.receiver_hidden,
+            cell=opts.receiver_cell
+        )
+        loss = DiffLoss(opts.n_attributes, opts.n_values)
+        baseline = {
+            'no': core.baselines.NoBaseline, 
+            'mean': core.baselines.MeanBaseline, 
+            'builtin': core.baselines.BuiltInBaseline
+        }[opts.baseline]
+        game = core.SenderReceiverRnnReinforce(
+            sender,
+            receiver,
+            loss,
+            sender_entropy_coeff=opts.sender_entropy_coeff,
+            receiver_entropy_coeff=0.0,
+            length_cost=0.0,
+            baseline_type=baseline,
+        )
+        optimizer = torch.optim.Adam(game.parameters(), lr=opts.lr)
+        trainer = core.Trainer(
+            game=game,
+            optimizer=optimizer,
+            train_data=train_loader,
+            validation_data=validation_loader,
+            callbacks=[
+                core.ConsoleLogger(as_json=True, print_train_loss=False),
+                core.EarlyStopperAccuracy(opts.early_stopping_thr, validation=True),
+            ]
+        )
+        trainer.train(n_epochs=opts.n_epochs)
+        with open(f"model/{opts.id}/train.txt", "rb") as file_train:
+            train_data = pickle.load(file_train)
+            for i in range(len(train_data)):
+                train_data[i] = train_data[i].tolist()
+            train_data = torch.tensor(train_data).to(device)
+        sequence, _logits, _entropy = sender(train_data)
+        D_input = []
+        D_msg = []
+        for i in range(len(train_data)):
+            for j in range(i+1, len(train_data)):
+                input1 = train_data[i].tolist()
+                input2 = train_data[j].tolist()
+
+                # calculate Hamming Distance
+                count = 0
+                input_length = len(input1)
+                for k in range(opts.n_attributes):
+                    input1_piece = input1[k*(input_length//opts.n_attributes):(k+1)*(input_length//opts.n_attributes)]
+                    input2_piece = input2[k*(input_length//opts.n_attributes):(k+1)*(input_length//opts.n_attributes)]
+                    if input1_piece != input2_piece:
+                        count += 1
+                D_input.append(count)
+
+                # calculate Edit Distance
+                message1 = sequence[i]
+                message2 = sequence[j]
+                D_msg.append(
+                    [message1[l] != message2[l] for l in range(opts.max_len)].count(True)
+                )
+        from scipy.stats import spearmanr
+        correlation, _pvalue = spearmanr(D_input, D_msg)
+        print(f"RESULT TOPSIM:", correlation)
+    
+    for receiver_idx in range(2):
+        sender = Sender(n_inputs=n_dim, n_hidden=opts.sender_hidden)
+        sender = core.RnnSenderReinforce(
+            agent=sender,
+            vocab_size=opts.vocab_size,
+            embed_dim=opts.sender_emb,
+            hidden_size=opts.sender_hidden,
+            max_len=opts.max_len,
+            force_eos=False,
+            cell=opts.sender_cell
+        )
+        sender = PlusOneWrapper(sender)
+        receiver = receivers[receiver_idx]
+        loss = DiffLoss(opts.n_attributes, opts.n_values)
+        baseline = {
+            'no': core.baselines.NoBaseline, 
+            'mean': core.baselines.MeanBaseline, 
+            'builtin': core.baselines.BuiltInBaseline
+        }[opts.baseline]
+        game = core.SenderReceiverRnnReinforce(
+            sender,
+            receiver,
+            loss,
+            sender_entropy_coeff=opts.sender_entropy_coeff,
+            receiver_entropy_coeff=0.0,
+            length_cost=0.0,
+            baseline_type=baseline,
+        )
+        optimizer = torch.optim.Adam(game.parameters(), lr=opts.lr)
+        trainer = core.Trainer(
+            game=game,
+            optimizer=optimizer,
+            train_data=train_loader,
+            validation_data=validation_loader,
+            callbacks=[
+                core.ConsoleLogger(as_json=True, print_train_loss=False),
+                core.EarlyStopperAccuracy(opts.early_stopping_thr, validation=True),
+            ]
+        )
+        trainer.train(n_epochs=opts.n_epochs)
+        with open(f"model/{opts.id}/train.txt", "rb") as file_train:
+            train_data = pickle.load(file_train)
+            for i in range(len(train_data)):
+                train_data[i] = train_data[i].tolist()
+            train_data = torch.tensor(train_data).to(device)
+        sequence, _logits, _entropy = sender(train_data)
+        D_input = []
+        D_msg = []
+        for i in range(len(train_data)):
+            for j in range(i+1, len(train_data)):
+                input1 = train_data[i].tolist()
+                input2 = train_data[j].tolist()
+
+                # calculate Hamming Distance
+                count = 0
+                input_length = len(input1)
+                for k in range(opts.n_attributes):
+                    input1_piece = input1[k*(input_length//opts.n_attributes):(k+1)*(input_length//opts.n_attributes)]
+                    input2_piece = input2[k*(input_length//opts.n_attributes):(k+1)*(input_length//opts.n_attributes)]
+                    if input1_piece != input2_piece:
+                        count += 1
+                D_input.append(count)
+
+                # calculate Edit Distance
+                message1 = sequence[i]
+                message2 = sequence[j]
+                D_msg.append(
+                    [message1[l] != message2[l] for l in range(opts.max_len)].count(True)
+                )
+        from scipy.stats import spearmanr
+        correlation, _pvalue = spearmanr(D_input, D_msg)
+        print(f"RESULT TOPSIM:", correlation)
+
+    print("---------------recheck END-------------")
+    
 
     # Finally, calculate the ease of learning
 
@@ -305,6 +457,7 @@ def main(params):
                 core.EarlyStopperAccuracy(opts.early_stopping_thr, validation=True),
             ]
         )
+
         print(f'--------------------L_{lang_idx+5} training start--------------------')
         trainer.train(n_epochs=opts.n_epochs // 2)
         print(f'--------------------L_{lang_idx+5} training end--------------------')
