@@ -129,7 +129,8 @@ def main(file_path: str):
                 "generalization": [],
             } for _ in range(12)
         ]
-        for i in range(12):
+        # for i in range(12):
+        for i in range(4):
             extract_one_model_data(
                 re.compile(r"--------------------L_{0} training start--------------------((.|\s)*?)--------------------L_{0} training end--------------------".format(i+1)),
                 raw_text,
@@ -162,9 +163,9 @@ def main(file_path: str):
     with Timer("generalizability"):
         generalizability(config['id'], L_raw_data)
 
-    # ease of learning
-    with Timer("ease of learning"):
-        ease_of_learning(config['id'], L_raw_data)
+    # # ease of learning
+    # with Timer("ease of learning"):
+    #     ease_of_learning(config['id'], L_raw_data)
 
     # make a markdown file as an organized and visualized result
     with Timer("generate a markdown file"):

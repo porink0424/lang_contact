@@ -7,15 +7,15 @@ export LD_LIBRARY_PATH=/home/app/cuda/lib64:$LD_LIBRARY_PATH
 # run `bash train_batcher.sh`.
 
 # variables to change
-start=1
-end=20
+start=21
+end=100
 partition="p"
-comment="recheck" # NOTE: Do not include blank.
+comment="topsimcheck" # NOTE: Do not include blank.
 natt=2
 nval=25
 cvoc=100
 clen=8
-epoch=2000
+epoch=1000
 early_stopping_thr=0.99
 sender_entropy_coeff=0.5
 
