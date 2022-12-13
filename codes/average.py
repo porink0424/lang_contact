@@ -1,3 +1,9 @@
+# This source is coded with great reference to
+# facebookresearch/EGG/egg/zoo/compo_vs_generalization/
+# (https://github.com/facebookresearch/EGG/tree/main/egg/zoo/compo_vs_generalization),
+# which are licensed under the MIT license
+# (https://github.com/facebookresearch/EGG/blob/main/LICENSE).
+
 import argparse
 import matplotlib.pyplot as plt
 import numpy as np
