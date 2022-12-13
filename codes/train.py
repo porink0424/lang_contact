@@ -324,7 +324,7 @@ def main(params):
         )
 
         print(f'--------------------L_{lang_idx+5} training start--------------------')
-        trainer.train(n_epochs=opts.n_epochs // 2)
+        trainer.train(n_epochs=opts.n_epochs)
         print(f'--------------------L_{lang_idx+5} training end--------------------')
 
     print('--------------------End--------------------')

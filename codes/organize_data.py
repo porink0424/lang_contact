@@ -128,6 +128,7 @@ def main(file_path: str):
         }
 
     # extract results about L_1 ~ L_12
+    failed = False
     with Timer("extract results"):
         L_raw_data = [
             {
@@ -135,45 +136,101 @@ def main(file_path: str):
                 "generalization": [],
             } for _ in range(12)
         ]
-        for i in range(12):
+
+        for i in range(4):
+            extract_one_model_data(
+                re.compile(r"--------------------L_{0} training start--------------------((.|\s)*?)--------------------L_{0} training end--------------------".format(i+1)),
+                raw_text,
+                L_raw_data[i],
+            )
+        
+        early_stopping_thr = float(config["early_stopping_thr"])
+        if (
+            float(L_raw_data[0]["test"][-1]["acc"]) < early_stopping_thr \
+            or float(L_raw_data[1]["test"][-1]["acc"]) < early_stopping_thr \
+            or float(L_raw_data[2]["test"][-1]["acc"]) < early_stopping_thr \
+            or float(L_raw_data[3]["test"][-1]["acc"]) < early_stopping_thr
+        ):
+            failed = True
+        print(early_stopping_thr, float(L_raw_data[0]["test"][-1]["acc"]), float(L_raw_data[1]["test"][-1]["acc"]), float(L_raw_data[2]["test"][-1]["acc"]), float(L_raw_data[3]["test"][-1]["acc"]))
+
+        for i in range(4, 12):
             extract_one_model_data(
                 re.compile(r"--------------------L_{0} training start--------------------((.|\s)*?)--------------------L_{0} training end--------------------".format(i+1)),
                 raw_text,
                 L_raw_data[i],
             )
     
-    # change of acc
-    with Timer("change of acc"):
-        change_of_acc(config['id'], L_raw_data)
+    if not failed:
+        # change of acc
+        with Timer("change of acc"):
+            change_of_acc(config['id'], L_raw_data)
 
-    # entropy
-    with Timer("entropy"):
-        entropy(config['id'], L_raw_data)
-    
-    # generate messages and dump to files
-    with Timer("generate messages"):
-        generate_sequences(config['id'], config["no_cuda"] == "True")
+        # entropy
+        with Timer("entropy"):
+            entropy(config['id'], L_raw_data)
+        
+        # generate messages and dump to files
+        with Timer("generate messages"):
+            generate_sequences(config['id'], config["no_cuda"] == "True")
 
-    # ngram
-    with Timer("ngram entropy"):
-        ngram_entropy = ngram(config['id'], int(config['vocab_size']))
+        # ngram
+        with Timer("ngram entropy"):
+            ngram_entropy = ngram(config['id'], int(config['vocab_size']))
 
-    # ↓ topsim will be calculated in `topsim.sh`, so now will be skipped.
-    # # topsim
-    # with Timer("topsim"):
-    #     topsim_result = topsim(config["no_cuda"] == "True", config['id'], int(config['n_attributes']), int(config['max_len']))
-    topsim_result = [f"L_{i}_topsim_fill_me" for i in [1,2,3,4]]
+        # ↓ topsim will be calculated in `topsim.sh`, so now will be skipped.
+        # # topsim
+        # with Timer("topsim"):
+        #     topsim_result = topsim(config["no_cuda"] == "True", config['id'], int(config['n_attributes']), int(config['max_len']))
+        topsim_result = [f"L_{i}_topsim_fill_me" for i in [1,2,3,4]]
 
-    # generalizability
-    with Timer("generalizability"):
-        generalizability(config['id'], L_raw_data)
+        # generalizability
+        with Timer("generalizability"):
+            generalizability(config['id'], L_raw_data)
 
-    # ease of learning
-    with Timer("ease of learning"):
-        ease_of_learning(config['id'], L_raw_data)
+        # ease of learning
+        with Timer("ease of learning"):
+            ease_of_learning(config['id'], L_raw_data)
 
-    # make a markdown file as an organized and visualized result
-    with Timer("generate a markdown file"):
+        # make a markdown file as an organized and visualized result
+        with Timer("generate a markdown file"):
+            f = open(f"result_md/{file_name}.md", "w")
+            transposed_config = []
+            for k,v in config.items():
+                transposed_config.append({"args": k, "values": v})
+            table = Tomark.table(transposed_config)
+            md_text = f"# {file_name}\n\n" \
+                + (f"### Comment\n\n{config['comment']}\n\n" if config['comment'] else "") \
+                + f"### Setting\n\n{table}\n\n"
+            
+            # Add info related to n-gram entropy
+            md_text += f"### N-gram entropy\n\n"
+            md_text += "|| unigram | bigram |\n" \
+                + "|-----|-----|-----|\n" \
+                + f"| $L_1$ | {ngram_entropy['unigram_entropy'][0]} | {ngram_entropy['bigram_entropy'][0]} |\n" \
+                + f"| $L_2$ | {ngram_entropy['unigram_entropy'][1]} | {ngram_entropy['bigram_entropy'][1]} |\n" \
+                + "|\n" \
+                + f"| $L_3$ | {ngram_entropy['unigram_entropy'][2]} | {ngram_entropy['bigram_entropy'][2]} |\n" \
+                + f"| $L_4$ | {ngram_entropy['unigram_entropy'][3]} | {ngram_entropy['bigram_entropy'][3]} |\n\n"
+            
+            # Add info related to topsim
+            md_text += f"### Topsim\n\n"
+            md_text += "|| Spearman Correlation |\n" \
+                + "|-----|-----|\n" \
+                + f"| $L_1$ | {topsim_result[0]} |\n" \
+                + f"| $L_2$ | {topsim_result[1]} |\n" \
+                + "|\n" \
+                + f"| $L_3$ | {topsim_result[2]} |\n" \
+                + f"| $L_4$ | {topsim_result[3]} |\n\n"
+
+            # Add all graphs
+            md_text += f"### Graphs\n\n"
+            files = sorted(glob.glob(f"./result_graph/{config['id']}/*"))
+            for file in files:
+                md_text += f"![{file[1:]}]({file[1:]})\n\n"
+            f.write(md_text)
+            f.close()
+    else:
         f = open(f"result_md/{file_name}.md", "w")
         transposed_config = []
         for k,v in config.items():
@@ -181,33 +238,8 @@ def main(file_path: str):
         table = Tomark.table(transposed_config)
         md_text = f"# {file_name}\n\n" \
             + (f"### Comment\n\n{config['comment']}\n\n" if config['comment'] else "") \
-            + f"### Setting\n\n{table}\n\n"
-        
-        # Add info related to n-gram entropy
-        md_text += f"### N-gram entropy\n\n"
-        md_text += "|| unigram | bigram |\n" \
-            + "|-----|-----|-----|\n" \
-            + f"| $L_1$ | {ngram_entropy['unigram_entropy'][0]} | {ngram_entropy['bigram_entropy'][0]} |\n" \
-            + f"| $L_2$ | {ngram_entropy['unigram_entropy'][1]} | {ngram_entropy['bigram_entropy'][1]} |\n" \
-            + "|\n" \
-            + f"| $L_3$ | {ngram_entropy['unigram_entropy'][2]} | {ngram_entropy['bigram_entropy'][2]} |\n" \
-            + f"| $L_4$ | {ngram_entropy['unigram_entropy'][3]} | {ngram_entropy['bigram_entropy'][3]} |\n\n"
-        
-        # Add info related to topsim
-        md_text += f"### Topsim\n\n"
-        md_text += "|| Spearman Correlation |\n" \
-            + "|-----|-----|\n" \
-            + f"| $L_1$ | {topsim_result[0]} |\n" \
-            + f"| $L_2$ | {topsim_result[1]} |\n" \
-            + "|\n" \
-            + f"| $L_3$ | {topsim_result[2]} |\n" \
-            + f"| $L_4$ | {topsim_result[3]} |\n\n"
-
-        # Add all graphs
-        md_text += f"### Graphs\n\n"
-        files = sorted(glob.glob(f"./result_graph/{config['id']}/*"))
-        for file in files:
-            md_text += f"![{file[1:]}]({file[1:]})\n\n"
+            + f"### Setting\n\n{table}\n\n" \
+            + "***** FAILED *****"
         f.write(md_text)
         f.close()
 

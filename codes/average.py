@@ -362,22 +362,35 @@ if __name__ == "__main__":
     parser.add_argument('--ids', required=True, nargs="*", type=str)
     args = parser.parse_args()
 
+    # failed runs are excluded
+    ids = []
+    for id in args.ids:
+        files = glob.glob(f"result_md/{id}*.md")
+        f = open(files[0], 'r')
+        md_text = f.read()
+        if "***** FAILED *****" in md_text:
+            print(f"{id} will be skipped.", flush=True)
+        else:
+            ids.append(id)
+        f.close()
+
     import os
     try:
-        os.mkdir(f"averaged_result/{args.ids[0]}~{args.ids[-1]}")
+        os.mkdir(f"averaged_result/{ids[0]}~{ids[-1]}")
     except FileExistsError:
         pass
 
+    # Need to change according to values of n-gram entropy
     unigram_ylims = [0, 0.1, 3.2, 3.35]
     bigram_ylims = [0, 0.1, 6.2, 6.8]
-    average_ngram_entropy(args.ids, unigram_ylims, bigram_ylims)
-    average_topsim(args.ids)
+    average_ngram_entropy(ids, unigram_ylims, bigram_ylims)
+    average_topsim(ids)
 
-    L_raw_datas = extract_L_raw_datas(args.ids)
-    average_change_of_acc(args.ids, L_raw_datas)
-    average_ease_of_learning_freezed_receiver(args.ids, L_raw_datas)
-    average_ease_of_learning_freezed_sender(args.ids, L_raw_datas)
-    average_sender_entropy(args.ids, L_raw_datas)
-    average_generalizability(args.ids, L_raw_datas)
+    L_raw_datas = extract_L_raw_datas(ids)
+    average_change_of_acc(ids, L_raw_datas)
+    average_ease_of_learning_freezed_receiver(ids, L_raw_datas)
+    average_ease_of_learning_freezed_sender(ids, L_raw_datas)
+    average_sender_entropy(ids, L_raw_datas)
+    average_generalizability(ids, L_raw_datas)
 
-    average_ngram_counts(args.ids)
+    average_ngram_counts(ids)
