@@ -243,41 +243,50 @@ def main(params):
             # P_{1, newS}
             'sender': copy.deepcopy(sender),
             'receiver': freezed_receivers[0],
+            'train_data': train_loader,
         },
         {
             # P_{1, newR}
             'sender': freezed_senders[0],
             'receiver': copy.deepcopy(receiver),
+            # In freezed sender mode, to prevent receivers from learning too quickly, we use non-scaled data
+            'train_data': validation_loader,
         },
         {
             # P_{2, newS}
             'sender': copy.deepcopy(sender),
             'receiver': freezed_receivers[1],
+            'train_data': train_loader,
         },
         {
             # P_{2, newR}
             'sender': freezed_senders[1],
             'receiver': copy.deepcopy(receiver),
+            'train_data': validation_loader,
         },
         {
             # P_{3, newS}
             'sender': copy.deepcopy(sender),
             'receiver': freezed_receivers[2],
+            'train_data': train_loader,
         },
         {
             # P_{3, newR}
             'sender': freezed_senders[2],
             'receiver': copy.deepcopy(receiver),
+            'train_data': validation_loader,
         },
         {
             # P_{4, newS}
             'sender': copy.deepcopy(sender),
             'receiver': freezed_receivers[3],
+            'train_data': train_loader,
         },
         {
             # P_{4, newR}
             'sender': freezed_senders[3],
             'receiver': copy.deepcopy(receiver),
+            'train_data': validation_loader,
         },
     ]
     for lang_idx, new_pair in enumerate(new_pairs):
@@ -300,7 +309,7 @@ def main(params):
         trainer = core.Trainer(
             game=game,
             optimizer=optimizer,
-            train_data=train_loader,
+            train_data=new_pair['train_data'],
             validation_data=validation_loader,
             callbacks=[
                 core.ConsoleLogger(as_json=True, print_train_loss=False),
