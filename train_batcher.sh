@@ -8,14 +8,14 @@ export LD_LIBRARY_PATH=/home/app/cuda/lib64:$LD_LIBRARY_PATH
 
 # variables to change
 start=1
-end=20
-partition="p"
-comment="recheck" # NOTE: Do not include blank.
+end=2
+partition="v"
+comment="aaa" # NOTE: Do not include blank.
 natt=2
-nval=25
-cvoc=100
-clen=8
-epoch=2000
+nval=100
+cvoc=10
+clen=6
+epoch=3000
 early_stopping_thr=0.99
 sender_entropy_coeff=0.5
 

@@ -6,7 +6,7 @@ import re
 import pickle
 from organize_data import extract_one_model_data
 
-def average_ngram_entropy(ids):
+def average_ngram_entropy(ids, unigram_ylims, bigram_ylims):
     ngram_entropy_data = [
         # L_1
         { "unigram": [], "bigram": [] },
@@ -32,26 +32,66 @@ def average_ngram_entropy(ids):
         ngram_entropy_data[3]["unigram"].append(float(match.group(7)))
         ngram_entropy_data[3]["bigram"].append(float(match.group(8)))
     
-    plt.figure(facecolor='lightgray')
-    plt.title("Unigram entropy")
-    plt.ylabel("entropy")
-    plt.bar(
+    fig, ax = plt.subplots(nrows=2, sharex='col', gridspec_kw={'height_ratios': (6,1)})
+    fig.set_facecolor('lightgray')
+    fig.suptitle("Unigram entropy")
+    fig.subplots_adjust(hspace=0.05)
+    ax[0].set_ylabel("entropy")
+    ax[0].set_ylim(unigram_ylims[2], unigram_ylims[3])
+    ax[0].bar(
         ["L_1", "L_2", "L_3", "L_4"],
         [np.average(ngram_entropy_data[i]["unigram"]) for i in range(4)],
         yerr=[np.std(ngram_entropy_data[i]["unigram"], ddof=1) / np.sqrt(len(ids)) for i in range(4)],
         capsize=10,
     )
-    plt.savefig(f"averaged_result/{ids[0]}~{ids[-1]}/unigram_entropy.png")
+    d = 0.02
+    line_args = dict(transform=ax[0].transAxes, lw=1, color='k', clip_on=False, linestyle=':')
+    ax[0].plot((-d, 1+d), (0, 0), **line_args)
+    ax[0].spines['bottom'].set_visible(False)
+    ax[0].tick_params(bottom=False)
+    ax[1].set_ylim(unigram_ylims[0], unigram_ylims[1])
+    ax[1].bar(
+        ["L_1", "L_2", "L_3", "L_4"],
+        [np.average(ngram_entropy_data[i]["unigram"]) for i in range(4)],
+        yerr=[np.std(ngram_entropy_data[i]["unigram"], ddof=1) / np.sqrt(len(ids)) for i in range(4)],
+        capsize=10,
+    )
+    line_args = dict(transform=ax[1].transAxes, lw=1, color='k', clip_on=False, linestyle=':')
+    ax[1].plot((-d, 1+d), (1, 1), **line_args)
+    ax[1].spines['top'].set_visible(False)
+    ax[1].set_yticks([0])
+    ax[1].set_yticklabels([0])
+    fig.savefig(f"averaged_result/{ids[0]}~{ids[-1]}/unigram_entropy.png")
 
-    plt.figure(facecolor='lightgray')
-    plt.title("Bigram entropy")
-    plt.ylabel("entropy")
-    plt.bar(
+    fig, ax = plt.subplots(nrows=2, sharex='col', gridspec_kw={'height_ratios': (6,1)})
+    fig.set_facecolor('lightgray')
+    fig.suptitle("Bigram entropy")
+    fig.subplots_adjust(hspace=0.05)
+    ax[0].set_ylabel("entropy")
+    ax[0].set_ylim(bigram_ylims[2], bigram_ylims[3])
+    ax[0].bar(
         ["L_1", "L_2", "L_3", "L_4"],
         [np.average(ngram_entropy_data[i]["bigram"]) for i in range(4)],
         yerr=[np.std(ngram_entropy_data[i]["bigram"], ddof=1) / np.sqrt(len(ids)) for i in range(4)],
         capsize=10,
     )
+    d = 0.02
+    line_args = dict(transform=ax[0].transAxes, lw=1, color='k', clip_on=False, linestyle=':')
+    ax[0].plot((-d, 1+d), (0, 0), **line_args)
+    ax[0].spines['bottom'].set_visible(False)
+    ax[0].tick_params(bottom=False)
+    ax[1].set_ylim(bigram_ylims[0], bigram_ylims[1])
+    ax[1].bar(
+        ["L_1", "L_2", "L_3", "L_4"],
+        [np.average(ngram_entropy_data[i]["bigram"]) for i in range(4)],
+        yerr=[np.std(ngram_entropy_data[i]["bigram"], ddof=1) / np.sqrt(len(ids)) for i in range(4)],
+        capsize=10,
+    )
+    line_args = dict(transform=ax[1].transAxes, lw=1, color='k', clip_on=False, linestyle=':')
+    ax[1].plot((-d, 1+d), (1, 1), **line_args)
+    ax[1].spines['top'].set_visible(False)
+    ax[1].set_yticks([0])
+    ax[1].set_yticklabels([0])
     plt.savefig(f"averaged_result/{ids[0]}~{ids[-1]}/bigram_entropy.png")
 
 def average_topsim(ids):
@@ -252,18 +292,31 @@ def average_ngram_counts(ids):
     plt.title("Unigram Counts")
     plt.xlabel("log(Rank)")
     plt.ylabel("log(Counts)")
-    vocab_size = len(counts_unigrams[0][0])
-    averaged_sorted_counts_unigrams = [np.array([0.0 for _ in range(vocab_size)]) for _ in range(4)]
-    for i in range(4):
-        with np.errstate(divide="ignore"):
-            for j in range(len(ids)):
-                averaged_sorted_counts_unigrams[i] += np.log(np.array(sorted(counts_unigrams[j][i], reverse=True))) / len(ids)
     plots = []
+    vocab_size = len(counts_unigrams[0][0])
     for i in range(4):
+        ngram_counts = [0.0 for _ in range(vocab_size)]
+        std = [[] for _ in range(vocab_size)]
+        for j in range(len(ids)):
+            with np.errstate(divide="ignore"):
+                sorted_count_unigram = np.log(np.array(sorted(counts_unigrams[j][i], reverse=True)))
+            for k in range(vocab_size):
+                ngram_counts[k] += sorted_count_unigram[k]
+                std[k].append(sorted_count_unigram[k])
+        ngram_counts = np.array(ngram_counts) / len(ids)
+        with np.errstate(invalid="ignore"):
+            std = np.array([np.std(array, ddof=1) for array in std])
         plots.append(plt.plot(
-            np.array([np.log(j+1) for j in range(len(averaged_sorted_counts_unigrams[i]))]),
-            averaged_sorted_counts_unigrams[i],
+            np.array([np.log(k+1) for k in range(vocab_size)]),
+            ngram_counts,
         ))
+        with np.errstate(invalid="ignore"):
+            plt.fill_between(
+                np.array([np.log(k+1) for k in range(vocab_size)]),
+                ngram_counts + std,
+                ngram_counts - std,
+                alpha=0.25
+            )
     plt.legend((plot[0] for plot in plots), ("L_1", "L_2", "L_3", "L_4"), loc=1)
     plt.savefig(f"averaged_result/{ids[0]}~{ids[-1]}/ngram_unigram.png")
 
@@ -271,17 +324,30 @@ def average_ngram_counts(ids):
     plt.title("Bigram Counts")
     plt.xlabel("log(Rank)")
     plt.ylabel("log(Counts)")
-    averaged_sorted_counts_bigrams = [np.array([0.0 for _ in range(vocab_size * vocab_size)]) for _ in range(4)]
-    for i in range(4):
-        with np.errstate(divide="ignore"):
-            for j in range(len(ids)):
-                averaged_sorted_counts_bigrams[i] += np.log(np.array(sorted(counts_bigrams[j][i], reverse=True))) / len(ids)
     plots = []
     for i in range(4):
+        ngram_counts = [0.0 for _ in range(vocab_size * vocab_size)]
+        std = [[] for _ in range(vocab_size * vocab_size)]
+        for j in range(len(ids)):
+            with np.errstate(divide="ignore"):
+                sorted_count_bigram = np.log(np.array(sorted(counts_bigrams[j][i], reverse=True)))
+            for k in range(vocab_size * vocab_size):
+                ngram_counts[k] += sorted_count_bigram[k]
+                std[k].append(sorted_count_bigram[k])
+        ngram_counts = np.array(ngram_counts) / len(ids)
+        with np.errstate(invalid="ignore"):
+            std = np.array([np.std(array, ddof=1) for array in std])
         plots.append(plt.plot(
-            np.array([np.log(j+1) for j in range(len(averaged_sorted_counts_bigrams[i]))]),
-            averaged_sorted_counts_bigrams[i],
+            np.array([np.log(k+1) for k in range(vocab_size * vocab_size)]),
+            ngram_counts,
         ))
+        with np.errstate(invalid="ignore"):
+            plt.fill_between(
+                np.array([np.log(k+1) for k in range(vocab_size * vocab_size)]),
+                ngram_counts + std,
+                ngram_counts - std,
+                alpha=0.25
+            )
     plt.legend((plot[0] for plot in plots), ("L_1", "L_2", "L_3", "L_4"), loc=1)
     plt.savefig(f"averaged_result/{ids[0]}~{ids[-1]}/ngram_bigram.png")
 
@@ -296,7 +362,9 @@ if __name__ == "__main__":
     except FileExistsError:
         pass
 
-    average_ngram_entropy(args.ids)
+    unigram_ylims = [0, 0.1, 3.2, 3.35]
+    bigram_ylims = [0, 0.1, 6.2, 6.8]
+    average_ngram_entropy(args.ids, unigram_ylims, bigram_ylims)
     average_topsim(args.ids)
 
     L_raw_datas = extract_L_raw_datas(args.ids)
