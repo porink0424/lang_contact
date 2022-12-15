@@ -38,6 +38,12 @@ After making a markdown file, you can calculate averaged results by running:
 bash average.sh id1 id2 id3 ...
 ```
 
+### Check states
+
+```
+bash state.sh id1 id2 ...
+```
+
 ## commit message prefix
 
 - feat: 新しい機能
