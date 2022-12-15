@@ -51,6 +51,7 @@ def main(params):
     opts = get_params(params)
     device = opts.device
     senders, receivers, freezed_senders, freezed_receivers = [], [], [], []
+    failed = False
 
     # print settings
     print(opts)
@@ -142,6 +143,7 @@ def main(params):
         optimizer = torch.optim.Adam(game.parameters(), lr=opts.lr)
 
         # training
+        early_stopper = core.EarlyStopperAccuracy(opts.early_stopping_thr, validation=True)
         trainer = core.Trainer(
             game=game,
             optimizer=optimizer,
@@ -149,7 +151,7 @@ def main(params):
             validation_data=validation_loader,
             callbacks=[
                 core.ConsoleLogger(as_json=True, print_train_loss=False),
-                core.EarlyStopperAccuracy(opts.early_stopping_thr, validation=True),
+                early_stopper,
                 Evaluator(
                     [("generalization", test_loader, DiffLoss(opts.n_attributes, opts.n_values))],
                     device,
@@ -159,6 +161,8 @@ def main(params):
         )
         print(f'--------------------L_{lang_idx} training start--------------------')
         trainer.train(n_epochs=opts.n_epochs)
+        if early_stopper.validation_stats[-1][1]['acc'] < opts.early_stopping_thr:
+            failed = True
         print(f'--------------------L_{lang_idx} training end--------------------')
     
         # save the model
@@ -193,6 +197,7 @@ def main(params):
         contact_optimizer = torch.optim.Adam(contact_game.parameters(), lr=opts.lr)
     
         # contact languages training
+        early_stopper = core.EarlyStopperAccuracy(opts.early_stopping_thr, validation=True)
         contact_trainer = core.Trainer(
             game=contact_game,
             optimizer=contact_optimizer,
@@ -200,7 +205,7 @@ def main(params):
             validation_data=validation_loader,
             callbacks=[
                 core.ConsoleLogger(as_json=True, print_train_loss=False),
-                core.EarlyStopperAccuracy(opts.early_stopping_thr, validation=True),
+                early_stopper,
                 Evaluator(
                     [("generalization", test_loader, DiffLoss(opts.n_attributes, opts.n_values))],
                     device,
@@ -210,6 +215,8 @@ def main(params):
         )
         print(f'--------------------L_{lang_idx} training start--------------------')
         contact_trainer.train(n_epochs=opts.n_epochs)
+        if early_stopper.validation_stats[-1][1]['acc'] < opts.early_stopping_thr:
+            failed = True
         print(f'--------------------L_{lang_idx} training end--------------------')
 
         # save the model
@@ -222,110 +229,114 @@ def main(params):
     
     # Finally, calculate the ease of learning
 
-    # make a new Sender and a new Receiver
-    sender = Sender(n_inputs=n_dim, n_hidden=opts.sender_hidden)
-    sender = core.RnnSenderReinforce(
-        agent=sender,
-        vocab_size=opts.vocab_size,
-        embed_dim=opts.sender_emb,
-        hidden_size=opts.sender_hidden,
-        max_len=opts.max_len,
-        force_eos=False,
-        cell=opts.sender_cell
-    )
-    sender = PlusOneWrapper(sender)
-    receiver = Receiver(n_hidden=opts.receiver_hidden, n_outputs=n_dim)
-    receiver = core.RnnReceiverDeterministic(
-        receiver,
-        opts.vocab_size + 1,
-        opts.receiver_emb,
-        opts.receiver_hidden,
-        cell=opts.receiver_cell
-    )
-
-    # training
-    new_pairs = [
-        {
-            # P_{1, newS}
-            'sender': copy.deepcopy(sender),
-            'receiver': freezed_receivers[0],
-            'train_data': train_loader,
-        },
-        {
-            # P_{1, newR}
-            'sender': freezed_senders[0],
-            'receiver': copy.deepcopy(receiver),
-            # In freezed sender mode, to prevent receivers from learning too quickly, we use non-scaled data
-            'train_data': validation_loader,
-        },
-        {
-            # P_{2, newS}
-            'sender': copy.deepcopy(sender),
-            'receiver': freezed_receivers[1],
-            'train_data': train_loader,
-        },
-        {
-            # P_{2, newR}
-            'sender': freezed_senders[1],
-            'receiver': copy.deepcopy(receiver),
-            'train_data': validation_loader,
-        },
-        {
-            # P_{3, newS}
-            'sender': copy.deepcopy(sender),
-            'receiver': freezed_receivers[2],
-            'train_data': train_loader,
-        },
-        {
-            # P_{3, newR}
-            'sender': freezed_senders[2],
-            'receiver': copy.deepcopy(receiver),
-            'train_data': validation_loader,
-        },
-        {
-            # P_{4, newS}
-            'sender': copy.deepcopy(sender),
-            'receiver': freezed_receivers[3],
-            'train_data': train_loader,
-        },
-        {
-            # P_{4, newR}
-            'sender': freezed_senders[3],
-            'receiver': copy.deepcopy(receiver),
-            'train_data': validation_loader,
-        },
-    ]
-    for lang_idx, new_pair in enumerate(new_pairs):
-        loss = DiffLoss(opts.n_attributes, opts.n_values)
-        baseline = {
-            'no': core.baselines.NoBaseline, 
-            'mean': core.baselines.MeanBaseline, 
-            'builtin': core.baselines.BuiltInBaseline
-        }[opts.baseline]
-        game = core.SenderReceiverRnnReinforce(
-            new_pair['sender'],
-            new_pair['receiver'],
-            loss,
-            sender_entropy_coeff=opts.sender_entropy_coeff,
-            receiver_entropy_coeff=0.0,
-            length_cost=0.0,
-            baseline_type=baseline,
+    if failed:
+        print("***** FAILED *****")
+        print("***** LEARNING STOPPED *****")
+    else:
+        # make a new Sender and a new Receiver
+        sender = Sender(n_inputs=n_dim, n_hidden=opts.sender_hidden)
+        sender = core.RnnSenderReinforce(
+            agent=sender,
+            vocab_size=opts.vocab_size,
+            embed_dim=opts.sender_emb,
+            hidden_size=opts.sender_hidden,
+            max_len=opts.max_len,
+            force_eos=False,
+            cell=opts.sender_cell
         )
-        optimizer = torch.optim.Adam(game.parameters(), lr=opts.lr)
-        trainer = core.Trainer(
-            game=game,
-            optimizer=optimizer,
-            train_data=new_pair['train_data'],
-            validation_data=validation_loader,
-            callbacks=[
-                core.ConsoleLogger(as_json=True, print_train_loss=False),
-                core.EarlyStopperAccuracy(opts.early_stopping_thr, validation=True),
-            ]
+        sender = PlusOneWrapper(sender)
+        receiver = Receiver(n_hidden=opts.receiver_hidden, n_outputs=n_dim)
+        receiver = core.RnnReceiverDeterministic(
+            receiver,
+            opts.vocab_size + 1,
+            opts.receiver_emb,
+            opts.receiver_hidden,
+            cell=opts.receiver_cell
         )
 
-        print(f'--------------------L_{lang_idx+5} training start--------------------')
-        trainer.train(n_epochs=opts.n_epochs)
-        print(f'--------------------L_{lang_idx+5} training end--------------------')
+        # training
+        new_pairs = [
+            {
+                # P_{1, newS}
+                'sender': copy.deepcopy(sender),
+                'receiver': freezed_receivers[0],
+                'train_data': train_loader,
+            },
+            {
+                # P_{1, newR}
+                'sender': freezed_senders[0],
+                'receiver': copy.deepcopy(receiver),
+                # In freezed sender mode, to prevent receivers from learning too quickly, we use non-scaled data
+                'train_data': validation_loader,
+            },
+            {
+                # P_{2, newS}
+                'sender': copy.deepcopy(sender),
+                'receiver': freezed_receivers[1],
+                'train_data': train_loader,
+            },
+            {
+                # P_{2, newR}
+                'sender': freezed_senders[1],
+                'receiver': copy.deepcopy(receiver),
+                'train_data': validation_loader,
+            },
+            {
+                # P_{3, newS}
+                'sender': copy.deepcopy(sender),
+                'receiver': freezed_receivers[2],
+                'train_data': train_loader,
+            },
+            {
+                # P_{3, newR}
+                'sender': freezed_senders[2],
+                'receiver': copy.deepcopy(receiver),
+                'train_data': validation_loader,
+            },
+            {
+                # P_{4, newS}
+                'sender': copy.deepcopy(sender),
+                'receiver': freezed_receivers[3],
+                'train_data': train_loader,
+            },
+            {
+                # P_{4, newR}
+                'sender': freezed_senders[3],
+                'receiver': copy.deepcopy(receiver),
+                'train_data': validation_loader,
+            },
+        ]
+        for lang_idx, new_pair in enumerate(new_pairs):
+            loss = DiffLoss(opts.n_attributes, opts.n_values)
+            baseline = {
+                'no': core.baselines.NoBaseline, 
+                'mean': core.baselines.MeanBaseline, 
+                'builtin': core.baselines.BuiltInBaseline
+            }[opts.baseline]
+            game = core.SenderReceiverRnnReinforce(
+                new_pair['sender'],
+                new_pair['receiver'],
+                loss,
+                sender_entropy_coeff=opts.sender_entropy_coeff,
+                receiver_entropy_coeff=0.0,
+                length_cost=0.0,
+                baseline_type=baseline,
+            )
+            optimizer = torch.optim.Adam(game.parameters(), lr=opts.lr)
+            trainer = core.Trainer(
+                game=game,
+                optimizer=optimizer,
+                train_data=new_pair['train_data'],
+                validation_data=validation_loader,
+                callbacks=[
+                    core.ConsoleLogger(as_json=True, print_train_loss=False),
+                    core.EarlyStopperAccuracy(opts.early_stopping_thr, validation=True),
+                ]
+            )
+
+            print(f'--------------------L_{lang_idx+5} training start--------------------')
+            trainer.train(n_epochs=opts.n_epochs)
+            print(f'--------------------L_{lang_idx+5} training end--------------------')
 
     print('--------------------End--------------------')
 
