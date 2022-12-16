@@ -236,10 +236,15 @@ def main(file_path: str):
         for k,v in config.items():
             transposed_config.append({"args": k, "values": v})
         table = Tomark.table(transposed_config)
+        success = [float(L_raw_data[i]["test"][-1]["acc"]) < early_stopping_thr for i in [0,1,2,3]]
         md_text = f"# {file_name}\n\n" \
             + (f"### Comment\n\n{config['comment']}\n\n" if config['comment'] else "") \
             + f"### Setting\n\n{table}\n\n" \
-            + "***** FAILED *****"
+            + "***** FAILED *****\n" \
+            + f"L_1 success: {success[0]}\n" \
+            + f"L_2 success: {success[1]}\n" \
+            + f"L_3 success: {success[2]}\n" \
+            + f"L_4 success: {success[3]}\n"
         f.write(md_text)
         f.close()
 

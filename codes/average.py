@@ -12,7 +12,7 @@ import re
 import pickle
 from organize_data import extract_one_model_data
 
-def average_ngram_entropy(ids, unigram_ylims, bigram_ylims):
+def average_ngram_entropy(ids, unigram_ylims, bigram_ylims, settings):
     ngram_entropy_data = [
         # L_1
         { "unigram": [], "bigram": [] },
@@ -40,7 +40,7 @@ def average_ngram_entropy(ids, unigram_ylims, bigram_ylims):
     
     fig, ax = plt.subplots(nrows=2, sharex='col', gridspec_kw={'height_ratios': (6,1)})
     fig.set_facecolor('lightgray')
-    fig.suptitle("Unigram entropy")
+    fig.suptitle(f"Unigram entropy (natt={settings['natt']},nval={settings['nval']},cvoc={settings['cvoc']},clen={settings['clen']})")
     fig.subplots_adjust(hspace=0.05)
     ax[0].set_ylabel("entropy")
     ax[0].set_ylim(unigram_ylims[2], unigram_ylims[3])
@@ -71,7 +71,7 @@ def average_ngram_entropy(ids, unigram_ylims, bigram_ylims):
 
     fig, ax = plt.subplots(nrows=2, sharex='col', gridspec_kw={'height_ratios': (6,1)})
     fig.set_facecolor('lightgray')
-    fig.suptitle("Bigram entropy")
+    fig.suptitle(f"Bigram entropy (natt={settings['natt']},nval={settings['nval']},cvoc={settings['cvoc']},clen={settings['clen']})")
     fig.subplots_adjust(hspace=0.05)
     ax[0].set_ylabel("entropy")
     ax[0].set_ylim(bigram_ylims[2], bigram_ylims[3])
@@ -100,7 +100,7 @@ def average_ngram_entropy(ids, unigram_ylims, bigram_ylims):
     ax[1].set_yticklabels([0])
     fig.savefig(f"averaged_result/{ids[0]}~{ids[-1]}/bigram_entropy.png", dpi=500)
 
-def average_topsim(ids):
+def average_topsim(ids, settings):
     topsim_data = [
         # L_1
         { "topsim": [] },
@@ -123,7 +123,7 @@ def average_topsim(ids):
         topsim_data[3]["topsim"].append(float(match.group(4)))
     
     plt.figure(facecolor='lightgray')
-    plt.title("Topsim")
+    plt.title(f"Topsim (natt={settings['natt']},nval={settings['nval']},cvoc={settings['cvoc']},clen={settings['clen']})")
     plt.ylabel("topsim")
     plt.bar(
         ["L_1", "L_2", "L_3", "L_4"],
@@ -164,9 +164,9 @@ def get_limit_index(count):
             return i
     return len(count)
 
-def average_change_of_acc(ids, L_raw_datas):
+def average_change_of_acc(ids, L_raw_datas, settings):
     plt.figure(facecolor='lightgray')
-    plt.title("Change of Acc")
+    plt.title(f"Change of Acc (natt={settings['natt']},nval={settings['nval']},cvoc={settings['cvoc']},clen={settings['clen']})")
     plt.xlabel("epochs")
     plt.ylabel("acc")
     max_epochs = [max([len(L_raw_datas[i][j]["test"]) for i in range(len(L_raw_datas))]) for j in range(4)] # max epochs for each L_1 ~ L_4
@@ -188,9 +188,9 @@ def average_change_of_acc(ids, L_raw_datas):
     plt.legend((plot[0] for plot in plots), ("L_1", "L_2", "L_3", "L_4"), loc=4)
     plt.savefig(f"averaged_result/{ids[0]}~{ids[-1]}/change_of_acc.png", dpi=500)
 
-def average_ease_of_learning_freezed_receiver(ids, L_raw_datas):
+def average_ease_of_learning_freezed_receiver(ids, L_raw_datas, settings):
     plt.figure(facecolor='lightgray')
-    plt.title("Ease of Learning (freezed receiver)")
+    plt.title(f"Ease of Learning (freezed receiver) (natt={settings['natt']},nval={settings['nval']},cvoc={settings['cvoc']},clen={settings['clen']})")
     plt.xlabel("epochs")
     plt.ylabel("acc")
     max_epochs = [max([len(L_raw_datas[i][j]["test"]) for i in range(len(L_raw_datas))]) for j in [4, 6, 8, 10]]
@@ -212,9 +212,9 @@ def average_ease_of_learning_freezed_receiver(ids, L_raw_datas):
     plt.legend((plot[0] for plot in plots), ("L_5", "L_7", "L_9", "L_11"), loc=4)
     plt.savefig(f"averaged_result/{ids[0]}~{ids[-1]}/ease_of_learning_freezed_receiver.png", dpi=500)
 
-def average_ease_of_learning_freezed_sender(ids, L_raw_datas):
+def average_ease_of_learning_freezed_sender(ids, L_raw_datas, settings):
     plt.figure(facecolor='lightgray')
-    plt.title("Ease of Learning (freezed sender)")
+    plt.title(f"Ease of Learning (freezed sender) (natt={settings['natt']},nval={settings['nval']},cvoc={settings['cvoc']},clen={settings['clen']})")
     plt.xlabel("epochs")
     plt.ylabel("acc")
     max_epochs = [max([len(L_raw_datas[i][j]["test"]) for i in range(len(L_raw_datas))]) for j in [5, 7, 9, 11]]
@@ -236,9 +236,9 @@ def average_ease_of_learning_freezed_sender(ids, L_raw_datas):
     plt.legend((plot[0] for plot in plots), ("L_6", "L_8", "L_10", "L_12"), loc=4)
     plt.savefig(f"averaged_result/{ids[0]}~{ids[-1]}/ease_of_learning_freezed_sender.png", dpi=500)
 
-def average_sender_entropy(ids, L_raw_datas):
+def average_sender_entropy(ids, L_raw_datas, settings):
     plt.figure(facecolor='lightgray')
-    plt.title("Sender Entropy")
+    plt.title(f"Sender Entropy (natt={settings['natt']},nval={settings['nval']},cvoc={settings['cvoc']},clen={settings['clen']})")
     plt.xlabel("epochs")
     plt.ylabel("entropy value")
     max_epochs = [max([len(L_raw_datas[i][j]["test"]) for i in range(len(L_raw_datas))]) for j in range(4)]
@@ -260,9 +260,9 @@ def average_sender_entropy(ids, L_raw_datas):
     plt.legend((plot[0] for plot in plots), ("L_1", "L_2", "L_3", "L_4"), loc=1)
     plt.savefig(f"averaged_result/{ids[0]}~{ids[-1]}/entropy.png", dpi=500)
 
-def average_generalizability(ids, L_raw_datas):
+def average_generalizability(ids, L_raw_datas, settings):
     plt.figure(facecolor='lightgray')
-    plt.title("Generalizability")
+    plt.title(f"Generalizability (natt={settings['natt']},nval={settings['nval']},cvoc={settings['cvoc']},clen={settings['clen']})")
     plt.xlabel("epochs")
     plt.ylabel("acc")
     max_epochs = [max([len(L_raw_datas[i][j]["generalization"]) for i in range(len(L_raw_datas))]) for j in range(4)]
@@ -285,7 +285,7 @@ def average_generalizability(ids, L_raw_datas):
     plt.legend((plot[0] for plot in plots), ("L_1", "L_2", "L_3", "L_4"), loc=4)
     plt.savefig(f"averaged_result/{ids[0]}~{ids[-1]}/generalizability.png", dpi=500)
 
-def average_ngram_counts(ids):
+def average_ngram_counts(ids, settings):
     counts_unigrams = []
     counts_bigrams = []
     for id in ids:
@@ -295,7 +295,7 @@ def average_ngram_counts(ids):
             counts_bigrams.append(pickle.load(f))
     
     plt.figure(facecolor='lightgray')
-    plt.title("Unigram Counts")
+    plt.title(f"Unigram Counts (natt={settings['natt']},nval={settings['nval']},cvoc={settings['cvoc']},clen={settings['clen']})")
     plt.xlabel("log(Rank)")
     plt.ylabel("log(Counts)")
     plots = []
@@ -327,7 +327,7 @@ def average_ngram_counts(ids):
     plt.savefig(f"averaged_result/{ids[0]}~{ids[-1]}/ngram_unigram.png", dpi=500)
 
     plt.figure(facecolor='lightgray')
-    plt.title("Bigram Counts")
+    plt.title(f"Bigram Counts (natt={settings['natt']},nval={settings['nval']},cvoc={settings['cvoc']},clen={settings['clen']})")
     plt.xlabel("log(Rank)")
     plt.ylabel("log(Counts)")
     plots = []
@@ -361,11 +361,15 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('--ids', required=True, nargs="*", type=str)
     args = parser.parse_args()
+    settings = dict()
 
     # failed runs are excluded
     ids = []
     for id in args.ids:
         files = glob.glob(f"result_md/{id}*.md")
+        if 'natt' not in settings:
+            numbers = re.findall(r'\d+', files[0])
+            settings['natt'], settings['nval'], settings['cvoc'], settings['clen'] = [numbers[i] for i in [1,2,3,4]]
         f = open(files[0], 'r')
         md_text = f.read()
         if "***** FAILED *****" in md_text:
@@ -383,14 +387,14 @@ if __name__ == "__main__":
     # Need to change according to values of n-gram entropy
     unigram_ylims = [0, 0.1, 3.2, 3.35]
     bigram_ylims = [0, 0.1, 6.2, 6.8]
-    average_ngram_entropy(ids, unigram_ylims, bigram_ylims)
-    average_topsim(ids)
+    average_ngram_entropy(ids, unigram_ylims, bigram_ylims, settings)
+    average_topsim(ids, settings)
 
     L_raw_datas = extract_L_raw_datas(ids)
-    average_change_of_acc(ids, L_raw_datas)
-    average_ease_of_learning_freezed_receiver(ids, L_raw_datas)
-    average_ease_of_learning_freezed_sender(ids, L_raw_datas)
-    average_sender_entropy(ids, L_raw_datas)
-    average_generalizability(ids, L_raw_datas)
+    average_change_of_acc(ids, L_raw_datas, settings)
+    average_ease_of_learning_freezed_receiver(ids, L_raw_datas, settings)
+    average_ease_of_learning_freezed_sender(ids, L_raw_datas, settings)
+    average_sender_entropy(ids, L_raw_datas, settings)
+    average_generalizability(ids, L_raw_datas, settings)
 
-    average_ngram_counts(ids)
+    average_ngram_counts(ids, settings)
