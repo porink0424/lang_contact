@@ -152,14 +152,14 @@ def main(file_path: str):
             or float(L_raw_data[3]["test"][-1]["acc"]) < early_stopping_thr
         ):
             failed = True
-        print(early_stopping_thr, float(L_raw_data[0]["test"][-1]["acc"]), float(L_raw_data[1]["test"][-1]["acc"]), float(L_raw_data[2]["test"][-1]["acc"]), float(L_raw_data[3]["test"][-1]["acc"]))
 
-        for i in range(4, 12):
-            extract_one_model_data(
-                re.compile(r"--------------------L_{0} training start--------------------((.|\s)*?)--------------------L_{0} training end--------------------".format(i+1)),
-                raw_text,
-                L_raw_data[i],
-            )
+        if not failed:
+            for i in range(4, 12):
+                extract_one_model_data(
+                    re.compile(r"--------------------L_{0} training start--------------------((.|\s)*?)--------------------L_{0} training end--------------------".format(i+1)),
+                    raw_text,
+                    L_raw_data[i],
+                )
     
     if not failed:
         # change of acc
