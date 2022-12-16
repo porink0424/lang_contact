@@ -365,6 +365,7 @@ if __name__ == "__main__":
 
     # failed runs are excluded
     ids = []
+    skipped = 0
     for id in args.ids:
         files = glob.glob(f"result_md/{id}*.md")
         if 'natt' not in settings:
@@ -374,9 +375,11 @@ if __name__ == "__main__":
         md_text = f.read()
         if "***** FAILED *****" in md_text:
             print(f"{id} will be skipped.", flush=True)
+            skipped += 1
         else:
             ids.append(id)
         f.close()
+    print(f"Sum: {skipped} runs will be skipped.")
 
     import os
     try:
