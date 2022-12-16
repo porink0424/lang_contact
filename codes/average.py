@@ -379,7 +379,7 @@ if __name__ == "__main__":
         else:
             ids.append(id)
         f.close()
-    print(f"Sum: {skipped} runs will be skipped.")
+    print(f"Sum: {skipped} out of {len(args.ids)} runs will be skipped.", flush=True)
 
     import os
     try:
