@@ -67,7 +67,7 @@ def average_ngram_entropy(ids, unigram_ylims, bigram_ylims):
     ax[1].spines['top'].set_visible(False)
     ax[1].set_yticks([0])
     ax[1].set_yticklabels([0])
-    fig.savefig(f"averaged_result/{ids[0]}~{ids[-1]}/unigram_entropy.png")
+    fig.savefig(f"averaged_result/{ids[0]}~{ids[-1]}/unigram_entropy.png", dpi=500)
 
     fig, ax = plt.subplots(nrows=2, sharex='col', gridspec_kw={'height_ratios': (6,1)})
     fig.set_facecolor('lightgray')
@@ -98,7 +98,7 @@ def average_ngram_entropy(ids, unigram_ylims, bigram_ylims):
     ax[1].spines['top'].set_visible(False)
     ax[1].set_yticks([0])
     ax[1].set_yticklabels([0])
-    plt.savefig(f"averaged_result/{ids[0]}~{ids[-1]}/bigram_entropy.png")
+    fig.savefig(f"averaged_result/{ids[0]}~{ids[-1]}/bigram_entropy.png", dpi=500)
 
 def average_topsim(ids):
     topsim_data = [
@@ -131,7 +131,7 @@ def average_topsim(ids):
         yerr=[np.std(topsim_data[i]["topsim"], ddof=1) / np.sqrt(len(ids)) for i in range(4)],
         capsize=10,
     )
-    plt.savefig(f"averaged_result/{ids[0]}~{ids[-1]}/topsim.png")
+    plt.savefig(f"averaged_result/{ids[0]}~{ids[-1]}/topsim.png", dpi=500)
 
 # L_raw_datas: the list of numbers of `L_raw_data` generated in each experiment.
 def extract_L_raw_datas(ids):
@@ -185,8 +185,8 @@ def average_change_of_acc(ids, L_raw_datas):
         std = np.array([(np.std(array, ddof=1) / np.sqrt(c)) if c >= 2 else 0.0 for array, c in zip(std, count)])[:limit_index]
         plots.append(plt.plot(np.array([i+1 for i in range(max_epochs[j])])[:limit_index], acc))
         plt.fill_between(np.array([i+1 for i in range(max_epochs[j])])[:limit_index], acc+std, acc-std, alpha=0.25)
-    plt.legend((plot[0] for plot in plots), ("L_1", "L_2", "L_3", "L_4"), loc=2)
-    plt.savefig(f"averaged_result/{ids[0]}~{ids[-1]}/change_of_acc.png")
+    plt.legend((plot[0] for plot in plots), ("L_1", "L_2", "L_3", "L_4"), loc=4)
+    plt.savefig(f"averaged_result/{ids[0]}~{ids[-1]}/change_of_acc.png", dpi=500)
 
 def average_ease_of_learning_freezed_receiver(ids, L_raw_datas):
     plt.figure(facecolor='lightgray')
@@ -209,8 +209,8 @@ def average_ease_of_learning_freezed_receiver(ids, L_raw_datas):
         std = np.array([(np.std(array, ddof=1) / np.sqrt(c)) if c >= 2 else 0.0 for array, c in zip(std, count)])[:limit_index]
         plots.append(plt.plot(np.array([i+1 for i in range(max_epoch)])[:limit_index], acc))
         plt.fill_between(np.array([i+1 for i in range(max_epoch)])[:limit_index], acc+std, acc-std, alpha=0.25)
-    plt.legend((plot[0] for plot in plots), ("L_5", "L_7", "L_9", "L_11"), loc=2)
-    plt.savefig(f"averaged_result/{ids[0]}~{ids[-1]}/ease_of_learning_freezed_receiver.png")
+    plt.legend((plot[0] for plot in plots), ("L_5", "L_7", "L_9", "L_11"), loc=4)
+    plt.savefig(f"averaged_result/{ids[0]}~{ids[-1]}/ease_of_learning_freezed_receiver.png", dpi=500)
 
 def average_ease_of_learning_freezed_sender(ids, L_raw_datas):
     plt.figure(facecolor='lightgray')
@@ -233,8 +233,8 @@ def average_ease_of_learning_freezed_sender(ids, L_raw_datas):
         std = np.array([(np.std(array, ddof=1) / np.sqrt(c)) if c >= 2 else 0.0 for array, c in zip(std, count)])[:limit_index]
         plots.append(plt.plot(np.array([i+1 for i in range(max_epoch)])[:limit_index], acc))
         plt.fill_between(np.array([i+1 for i in range(max_epoch)])[:limit_index], acc+std, acc-std, alpha=0.25)
-    plt.legend((plot[0] for plot in plots), ("L_6", "L_8", "L_10", "L_12"), loc=2)
-    plt.savefig(f"averaged_result/{ids[0]}~{ids[-1]}/ease_of_learning_freezed_sender.png")
+    plt.legend((plot[0] for plot in plots), ("L_6", "L_8", "L_10", "L_12"), loc=4)
+    plt.savefig(f"averaged_result/{ids[0]}~{ids[-1]}/ease_of_learning_freezed_sender.png", dpi=500)
 
 def average_sender_entropy(ids, L_raw_datas):
     plt.figure(facecolor='lightgray')
@@ -258,7 +258,7 @@ def average_sender_entropy(ids, L_raw_datas):
         plots.append(plt.plot(np.array([i+1 for i in range(max_epochs[j])])[:limit_index], sender_entropy))
         plt.fill_between(np.array([i+1 for i in range(max_epochs[j])])[:limit_index], sender_entropy+std, sender_entropy-std, alpha=0.25)
     plt.legend((plot[0] for plot in plots), ("L_1", "L_2", "L_3", "L_4"), loc=1)
-    plt.savefig(f"averaged_result/{ids[0]}~{ids[-1]}/entropy.png")
+    plt.savefig(f"averaged_result/{ids[0]}~{ids[-1]}/entropy.png", dpi=500)
 
 def average_generalizability(ids, L_raw_datas):
     plt.figure(facecolor='lightgray')
@@ -282,8 +282,8 @@ def average_generalizability(ids, L_raw_datas):
             std = np.array([(np.std(array, ddof=1) / np.sqrt(c)) if c >= 2 else 0.0 for array, c in zip(std, count)])[:limit_index]
         plots.append(plt.plot(np.array([i+1 for i in range(max_epochs[j])])[:limit_index], acc))
         plt.fill_between(np.array([i+1 for i in range(max_epochs[j])])[:limit_index], acc+std, acc-std, alpha=0.25)
-    plt.legend((plot[0] for plot in plots), ("L_1", "L_2", "L_3", "L_4"), loc=2)
-    plt.savefig(f"averaged_result/{ids[0]}~{ids[-1]}/generalizability.png")
+    plt.legend((plot[0] for plot in plots), ("L_1", "L_2", "L_3", "L_4"), loc=4)
+    plt.savefig(f"averaged_result/{ids[0]}~{ids[-1]}/generalizability.png", dpi=500)
 
 def average_ngram_counts(ids):
     counts_unigrams = []
@@ -324,7 +324,7 @@ def average_ngram_counts(ids):
                 alpha=0.25
             )
     plt.legend((plot[0] for plot in plots), ("L_1", "L_2", "L_3", "L_4"), loc=1)
-    plt.savefig(f"averaged_result/{ids[0]}~{ids[-1]}/ngram_unigram.png")
+    plt.savefig(f"averaged_result/{ids[0]}~{ids[-1]}/ngram_unigram.png", dpi=500)
 
     plt.figure(facecolor='lightgray')
     plt.title("Bigram Counts")
@@ -355,7 +355,7 @@ def average_ngram_counts(ids):
                 alpha=0.25
             )
     plt.legend((plot[0] for plot in plots), ("L_1", "L_2", "L_3", "L_4"), loc=1)
-    plt.savefig(f"averaged_result/{ids[0]}~{ids[-1]}/ngram_bigram.png")
+    plt.savefig(f"averaged_result/{ids[0]}~{ids[-1]}/ngram_bigram.png", dpi=500)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
