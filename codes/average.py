@@ -297,6 +297,30 @@ def average_generalizability(ids, L_raw_datas, settings):
     plt.legend((plot[0] for plot in plots), ("L_1", "L_2", "L_3", "L_4"), loc=4)
     plt.savefig(f"averaged_result/{ids[0]}~{ids[-1]}/generalizability.png", dpi=500)
 
+    plt.figure(facecolor='lightgray')
+    plt.title(f"Generalizability(log scale) (natt={settings['natt']},nval={settings['nval']},cvoc={settings['cvoc']},clen={settings['clen']})")
+    plt.xlabel("log(epochs)")
+    plt.ylabel("acc")
+    max_epochs = [max([len(L_raw_datas[i][j]["generalization"]) for i in range(len(L_raw_datas))]) for j in range(4)]
+    plots = []
+    for j in range(4):
+        acc = [0 for _ in range(max_epochs[j])]
+        std = [[] for _ in range(max_epochs[j])]
+        count = [0 for _ in range(max_epochs[j])]
+        for i in range(len(L_raw_datas)):
+            for k, data in enumerate(L_raw_datas[i][j]["generalization"]):
+                acc[k] += float(data["acc"])
+                count[k] += 1
+                std[k].append(float(data["acc"]))
+        limit_index = get_limit_index(count)
+        acc = np.array([a / c for a, c in zip(acc, count)])[:limit_index]
+        with np.errstate(all='ignore'):
+            std = np.array([(np.std(array, ddof=1) / np.sqrt(c)) if c >= 2 else 0.0 for array, c in zip(std, count)])[:limit_index]
+        plots.append(plt.plot(np.array([np.log(i+1) for i in range(max_epochs[j])])[:limit_index], acc))
+        plt.fill_between(np.array([np.log(i+1) for i in range(max_epochs[j])])[:limit_index], acc+std, acc-std, alpha=0.25)
+    plt.legend((plot[0] for plot in plots), ("L_1", "L_2", "L_3", "L_4"), loc=4)
+    plt.savefig(f"averaged_result/{ids[0]}~{ids[-1]}/generalizability_log.png", dpi=500)
+
 def average_ngram_counts(ids, settings):
     counts_unigrams = []
     counts_bigrams = []
