@@ -100,6 +100,42 @@ def average_ngram_entropy(ids, unigram_ylims, bigram_ylims, settings):
     ax[1].set_yticklabels([0])
     fig.savefig(f"averaged_result/{ids[0]}~{ids[-1]}/bigram_entropy.png", dpi=500)
 
+def average_sender_entropy(ids, settings):
+    sender_entropy_data = [
+        # L_1
+        { "sender_entropy": [] },
+        # L_2
+        { "sender_entropy": [] },
+        # L_3
+        { "sender_entropy": [] },
+        # L_4
+        { "sender_entropy": [] },
+    ]
+    for id in ids:
+        files = glob.glob(f"result/{id}*txt")
+        f = open(files[0], 'r')
+        raw_text = f.read()
+        f.close()
+        match = re.search(r'\{\"mode\": \"test\", \"epoch\": .*?, \"loss\": .*?, \"acc\": .*?, \"acc_or\": .*?, \"sender_entropy\": (.*?), .*?\}\n\{\"generalization\": \{.*?\}, .*?\}\n--------------------L_1 training end--------------------', raw_text)
+        sender_entropy_data[0]["sender_entropy"].append(float(match.group(1)))
+        match = re.search(r'\{\"mode\": \"test\", \"epoch\": .*?, \"loss\": .*?, \"acc\": .*?, \"acc_or\": .*?, \"sender_entropy\": (.*?), .*?\}\n\{\"generalization\": \{.*?\}, .*?\}\n--------------------L_2 training end--------------------', raw_text)
+        sender_entropy_data[1]["sender_entropy"].append(float(match.group(1)))
+        match = re.search(r'\{\"mode\": \"test\", \"epoch\": .*?, \"loss\": .*?, \"acc\": .*?, \"acc_or\": .*?, \"sender_entropy\": (.*?), .*?\}\n\{\"generalization\": \{.*?\}, .*?\}\n--------------------L_3 training end--------------------', raw_text)
+        sender_entropy_data[2]["sender_entropy"].append(float(match.group(1)))
+        match = re.search(r'\{\"mode\": \"test\", \"epoch\": .*?, \"loss\": .*?, \"acc\": .*?, \"acc_or\": .*?, \"sender_entropy\": (.*?), .*?\}\n\{\"generalization\": \{.*?\}, .*?\}\n--------------------L_4 training end--------------------', raw_text)
+        sender_entropy_data[3]["sender_entropy"].append(float(match.group(1)))
+    
+    plt.figure(facecolor='lightgray')
+    plt.title(f"Sender Entropy (natt={settings['natt']},nval={settings['nval']},cvoc={settings['cvoc']},clen={settings['clen']})")
+    plt.ylabel("entropy")
+    plt.bar(
+        ["L_1", "L_2", "L_3", "L_4"],
+        [np.average(sender_entropy_data[i]["sender_entropy"]) for i in range(4)],
+        yerr=[np.std(sender_entropy_data[i]["sender_entropy"], ddof=1) / np.sqrt(len(ids)) for i in range(4)],
+        capsize=10,
+    )
+    plt.savefig(f"averaged_result/{ids[0]}~{ids[-1]}/sender_entropy.png", dpi=500)
+
 def average_topsim(ids, settings):
     topsim_data = [
         # L_1
@@ -236,30 +272,6 @@ def average_ease_of_learning_freezed_sender(ids, L_raw_datas, settings):
     plt.legend((plot[0] for plot in plots), ("L_6", "L_8", "L_10", "L_12"), loc=4)
     plt.savefig(f"averaged_result/{ids[0]}~{ids[-1]}/ease_of_learning_freezed_sender.png", dpi=500)
 
-def average_sender_entropy(ids, L_raw_datas, settings):
-    plt.figure(facecolor='lightgray')
-    plt.title(f"Sender Entropy (natt={settings['natt']},nval={settings['nval']},cvoc={settings['cvoc']},clen={settings['clen']})")
-    plt.xlabel("epochs")
-    plt.ylabel("entropy value")
-    max_epochs = [max([len(L_raw_datas[i][j]["test"]) for i in range(len(L_raw_datas))]) for j in range(4)]
-    plots = []
-    for j in range(4):
-        sender_entropy = [0 for _ in range(max_epochs[j])]
-        std = [[] for _ in range(max_epochs[j])]
-        count = [0 for _ in range(max_epochs[j])]
-        for i in range(len(L_raw_datas)):
-            for k, data in enumerate(L_raw_datas[i][j]["test"]):
-                sender_entropy[k] += float(data["sender_entropy"])
-                count[k] += 1
-                std[k].append(float(data["sender_entropy"]))
-        limit_index = get_limit_index(count)
-        sender_entropy = np.array([a / c for a, c in zip(sender_entropy, count)])[:limit_index]
-        std = np.array([(np.std(array, ddof=1) / np.sqrt(c)) if c >= 2 else 0.0 for array, c in zip(std, count)])[:limit_index]
-        plots.append(plt.plot(np.array([i+1 for i in range(max_epochs[j])])[:limit_index], sender_entropy))
-        plt.fill_between(np.array([i+1 for i in range(max_epochs[j])])[:limit_index], sender_entropy+std, sender_entropy-std, alpha=0.25)
-    plt.legend((plot[0] for plot in plots), ("L_1", "L_2", "L_3", "L_4"), loc=1)
-    plt.savefig(f"averaged_result/{ids[0]}~{ids[-1]}/entropy.png", dpi=500)
-
 def average_generalizability(ids, L_raw_datas, settings):
     plt.figure(facecolor='lightgray')
     plt.title(f"Generalizability (natt={settings['natt']},nval={settings['nval']},cvoc={settings['cvoc']},clen={settings['clen']})")
@@ -388,16 +400,16 @@ if __name__ == "__main__":
         pass
 
     # Need to change according to values of n-gram entropy
-    unigram_ylims = [0, 0.1, 3.2, 3.35]
-    bigram_ylims = [0, 0.1, 6.2, 6.8]
+    unigram_ylims = [0, 0.1, 2.25, 2.35]
+    bigram_ylims = [0, 0.1, 4.55, 4.65]
     average_ngram_entropy(ids, unigram_ylims, bigram_ylims, settings)
+    average_sender_entropy(ids, settings)
     average_topsim(ids, settings)
 
     L_raw_datas = extract_L_raw_datas(ids)
     average_change_of_acc(ids, L_raw_datas, settings)
     average_ease_of_learning_freezed_receiver(ids, L_raw_datas, settings)
     average_ease_of_learning_freezed_sender(ids, L_raw_datas, settings)
-    average_sender_entropy(ids, L_raw_datas, settings)
     average_generalizability(ids, L_raw_datas, settings)
 
     average_ngram_counts(ids, settings)
