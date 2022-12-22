@@ -7,10 +7,10 @@ export LD_LIBRARY_PATH=/home/app/cuda/lib64:$LD_LIBRARY_PATH
 # run `bash train_batcher.sh`.
 
 # variables to change
-start=1
-end=20
-partition="v"
-comment="v1~20" # NOTE: Do not include blank.
+start=92
+end=100
+partition="p"
+comment="p92~100" # NOTE: Do not include blank.
 natt=4
 nval=10
 cvoc=10

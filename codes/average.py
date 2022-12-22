@@ -224,6 +224,29 @@ def average_change_of_acc(ids, L_raw_datas, settings):
     plt.legend((plot[0] for plot in plots), ("L_1", "L_2", "L_3", "L_4"), loc=4)
     plt.savefig(f"averaged_result/{ids[0]}~{ids[-1]}/change_of_acc.png", dpi=500)
 
+    plt.figure(facecolor='lightgray')
+    plt.title(f"Change of Acc(log scale) (natt={settings['natt']},nval={settings['nval']},cvoc={settings['cvoc']},clen={settings['clen']})")
+    plt.xlabel("epochs")
+    plt.ylabel("acc")
+    max_epochs = [max([len(L_raw_datas[i][j]["test"]) for i in range(len(L_raw_datas))]) for j in range(4)] # max epochs for each L_1 ~ L_4
+    plots = []
+    for j in range(4):
+        acc = [0 for _ in range(max_epochs[j])]
+        std = [[] for _ in range(max_epochs[j])]
+        count = [0 for _ in range(max_epochs[j])]
+        for i in range(len(L_raw_datas)):
+            for k, data in enumerate(L_raw_datas[i][j]["test"]):
+                acc[k] += float(data["acc"])
+                count[k] += 1
+                std[k].append(float(data["acc"]))
+        limit_index = get_limit_index(count)
+        acc = np.array([a / c for a, c in zip(acc, count)])[:limit_index]
+        std = np.array([(np.std(array, ddof=1) / np.sqrt(c)) if c >= 2 else 0.0 for array, c in zip(std, count)])[:limit_index]
+        plots.append(plt.plot(np.array([np.log(i+1) for i in range(max_epochs[j])])[:limit_index], acc))
+        plt.fill_between(np.array([np.log(i+1) for i in range(max_epochs[j])])[:limit_index], acc+std, acc-std, alpha=0.25)
+    plt.legend((plot[0] for plot in plots), ("L_1", "L_2", "L_3", "L_4"), loc=4)
+    plt.savefig(f"averaged_result/{ids[0]}~{ids[-1]}/change_of_acc_log.png", dpi=500)
+
 def average_ease_of_learning_freezed_receiver(ids, L_raw_datas, settings):
     plt.figure(facecolor='lightgray')
     plt.title(f"Ease of Learning (freezed receiver) (natt={settings['natt']},nval={settings['nval']},cvoc={settings['cvoc']},clen={settings['clen']})")
@@ -424,8 +447,19 @@ if __name__ == "__main__":
         pass
 
     # Need to change according to values of n-gram entropy
-    unigram_ylims = [0, 0.1, 2.25, 2.35]
-    bigram_ylims = [0, 0.1, 4.55, 4.65]
+    # TODO: unigram, bigramのylimの範囲、パラメタを通して共通にするのが良さそう
+    # # 2-100-5-8
+    # unigram_ylims = [0, 0.1, 2.25, 2.35]
+    # bigram_ylims = [0, 0.1, 4.40, 4.70]
+    # # 2-100-10-6
+    # unigram_ylims = [0, 0.1, 3.22, 3.32]
+    # bigram_ylims = [0, 0.1, 6.35, 6.65]
+    # # 4-10-5-8
+    # unigram_ylims = [0, 0.1, 2.25, 2.35]
+    # bigram_ylims = [0, 0.1, 4.40, 4.70]
+    # 4-10-10-6
+    unigram_ylims = [0, 0.1, 3.22, 3.32]
+    bigram_ylims = [0, 0.1, 6.35, 6.65]
     average_ngram_entropy(ids, unigram_ylims, bigram_ylims, settings)
     average_sender_entropy(ids, settings)
     average_topsim(ids, settings)
