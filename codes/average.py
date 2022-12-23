@@ -424,7 +424,8 @@ if __name__ == "__main__":
 
     # failed runs are excluded
     ids = []
-    skipped = 0
+    L_1_L_2_failed = 0
+    L_3_L_4_failed = 0
     for id in args.ids:
         files = glob.glob(f"result_md/{id}*.md")
         if 'natt' not in settings:
@@ -434,17 +435,23 @@ if __name__ == "__main__":
         md_text = f.read()
         if "***** FAILED *****" in md_text:
             print(f"{id} will be skipped.", flush=True)
-            skipped += 1
+            if "L_1 failed: True" in md_text or "L_2 failed: True" in md_text:
+                L_1_L_2_failed += 1
+            elif "L_3 failed: True" in md_text or "L_4 failed: True" in md_text:
+                L_3_L_4_failed += 1
+            else:
+                raise ValueError()
         else:
             ids.append(id)
         f.close()
-    print(f"Sum: {skipped} out of {len(args.ids)} runs will be skipped.", flush=True)
+    print(f"L_1 or L_2 failed: {L_1_L_2_failed}, L_3 or L_4 failed: {L_3_L_4_failed}", flush=True)
+    print(f"Sum: {len(ids)} out of {len(args.ids)} runs successful.", flush=True)
 
-    import os
-    try:
-        os.mkdir(f"averaged_result/{ids[0]}~{ids[-1]}")
-    except FileExistsError:
-        pass
+    # import os
+    # try:
+    #     os.mkdir(f"averaged_result/{ids[0]}~{ids[-1]}")
+    # except FileExistsError:
+    #     pass
 
     # Need to change according to values of n-gram entropy
     # TODO: unigram, bigramのylimの範囲、パラメタを通して共通にするのが良さそう
@@ -460,6 +467,7 @@ if __name__ == "__main__":
     # 4-10-10-6
     unigram_ylims = [0, 0.1, 3.22, 3.32]
     bigram_ylims = [0, 0.1, 6.35, 6.65]
+
     average_ngram_entropy(ids, unigram_ylims, bigram_ylims, settings)
     average_sender_entropy(ids, settings)
     average_topsim(ids, settings)
