@@ -136,6 +136,10 @@ def average_sender_entropy(ids, settings):
     )
     plt.savefig(f"averaged_result/{ids[0]}~{ids[-1]}/sender_entropy.png", dpi=500)
 
+    print("sender entropy")
+    print("avg:", [np.average(sender_entropy_data[i]["sender_entropy"]) for i in range(4)])
+    print("sem:", [np.std(sender_entropy_data[i]["sender_entropy"], ddof=1) / np.sqrt(len(ids)) for i in range(4)])
+
 def average_topsim(ids, settings):
     topsim_data = [
         # L_1
@@ -168,6 +172,10 @@ def average_topsim(ids, settings):
         capsize=10,
     )
     plt.savefig(f"averaged_result/{ids[0]}~{ids[-1]}/topsim.png", dpi=500)
+
+    print("topsim")
+    print("avg:", [np.average(topsim_data[i]["topsim"]) for i in range(4)])
+    print("sem:", [np.std(topsim_data[i]["topsim"], ddof=1) / np.sqrt(len(ids)) for i in range(4)])
 
 # L_raw_datas: the list of numbers of `L_raw_data` generated in each experiment.
 def extract_L_raw_datas(ids):
@@ -447,14 +455,13 @@ if __name__ == "__main__":
     print(f"L_1 or L_2 failed: {L_1_L_2_failed}, L_3 or L_4 failed: {L_3_L_4_failed}", flush=True)
     print(f"Sum: {len(ids)} out of {len(args.ids)} runs successful.", flush=True)
 
-    # import os
-    # try:
-    #     os.mkdir(f"averaged_result/{ids[0]}~{ids[-1]}")
-    # except FileExistsError:
-    #     pass
+    import os
+    try:
+        os.mkdir(f"averaged_result/{ids[0]}~{ids[-1]}")
+    except FileExistsError:
+        pass
 
     # Need to change according to values of n-gram entropy
-    # TODO: unigram, bigramのylimの範囲、パラメタを通して共通にするのが良さそう
     # # 2-100-5-8
     # unigram_ylims = [0, 0.1, 2.25, 2.35]
     # bigram_ylims = [0, 0.1, 4.40, 4.70]
