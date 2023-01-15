@@ -12,6 +12,8 @@ import re
 import pickle
 from organize_data import extract_one_model_data
 
+# plt.style.use('tableau-colorblind10')
+
 def average_ngram_entropy(ids, unigram_ylims, bigram_ylims, settings):
     ngram_entropy_data = [
         # L_1
@@ -255,9 +257,9 @@ def average_change_of_acc(ids, L_raw_datas, settings):
     plt.legend((plot[0] for plot in plots), ("L_1", "L_2", "L_3", "L_4"), loc=4)
     plt.savefig(f"averaged_result/{ids[0]}~{ids[-1]}/change_of_acc_log.png", dpi=500)
 
-def average_ease_of_learning_freezed_receiver(ids, L_raw_datas, settings):
+def average_ease_of_learning_frozen_receiver(ids, L_raw_datas, settings):
     plt.figure(facecolor='lightgray')
-    plt.title(f"Ease of Learning (freezed receiver) (natt={settings['natt']},nval={settings['nval']},cvoc={settings['cvoc']},clen={settings['clen']})")
+    plt.title(f"Ease of Learning (frozen receiver) (natt={settings['natt']},nval={settings['nval']},cvoc={settings['cvoc']},clen={settings['clen']})")
     plt.xlabel("epochs")
     plt.ylabel("acc")
     max_epochs = [max([len(L_raw_datas[i][j]["test"]) for i in range(len(L_raw_datas))]) for j in [4, 6, 8, 10]]
@@ -277,11 +279,11 @@ def average_ease_of_learning_freezed_receiver(ids, L_raw_datas, settings):
         plots.append(plt.plot(np.array([i+1 for i in range(max_epoch)])[:limit_index], acc))
         plt.fill_between(np.array([i+1 for i in range(max_epoch)])[:limit_index], acc+std, acc-std, alpha=0.25)
     plt.legend((plot[0] for plot in plots), ("L_5", "L_7", "L_9", "L_11"), loc=4)
-    plt.savefig(f"averaged_result/{ids[0]}~{ids[-1]}/ease_of_learning_freezed_receiver.png", dpi=500)
+    plt.savefig(f"averaged_result/{ids[0]}~{ids[-1]}/ease_of_learning_frozen_receiver.png", dpi=500)
 
-def average_ease_of_learning_freezed_sender(ids, L_raw_datas, settings):
+def average_ease_of_learning_frozen_sender(ids, L_raw_datas, settings):
     plt.figure(facecolor='lightgray')
-    plt.title(f"Ease of Learning (freezed sender) (natt={settings['natt']},nval={settings['nval']},cvoc={settings['cvoc']},clen={settings['clen']})")
+    plt.title(f"Ease of Learning (frozen sender) (natt={settings['natt']},nval={settings['nval']},cvoc={settings['cvoc']},clen={settings['clen']})")
     plt.xlabel("epochs")
     plt.ylabel("acc")
     max_epochs = [max([len(L_raw_datas[i][j]["test"]) for i in range(len(L_raw_datas))]) for j in [5, 7, 9, 11]]
@@ -301,7 +303,7 @@ def average_ease_of_learning_freezed_sender(ids, L_raw_datas, settings):
         plots.append(plt.plot(np.array([i+1 for i in range(max_epoch)])[:limit_index], acc))
         plt.fill_between(np.array([i+1 for i in range(max_epoch)])[:limit_index], acc+std, acc-std, alpha=0.25)
     plt.legend((plot[0] for plot in plots), ("L_6", "L_8", "L_10", "L_12"), loc=4)
-    plt.savefig(f"averaged_result/{ids[0]}~{ids[-1]}/ease_of_learning_freezed_sender.png", dpi=500)
+    plt.savefig(f"averaged_result/{ids[0]}~{ids[-1]}/ease_of_learning_frozen_sender.png", dpi=500)
 
 def average_generalizability(ids, L_raw_datas, settings):
     plt.figure(facecolor='lightgray')
@@ -481,8 +483,8 @@ if __name__ == "__main__":
 
     L_raw_datas = extract_L_raw_datas(ids)
     average_change_of_acc(ids, L_raw_datas, settings)
-    average_ease_of_learning_freezed_receiver(ids, L_raw_datas, settings)
-    average_ease_of_learning_freezed_sender(ids, L_raw_datas, settings)
+    average_ease_of_learning_frozen_receiver(ids, L_raw_datas, settings)
+    average_ease_of_learning_frozen_sender(ids, L_raw_datas, settings)
     average_generalizability(ids, L_raw_datas, settings)
 
     average_ngram_counts(ids, settings)
