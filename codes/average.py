@@ -14,6 +14,9 @@ from organize_data import extract_one_model_data
 
 # plt.style.use('tableau-colorblind10')
 
+plt.rcParams["font.size"] = 14
+plt.tight_layout()
+
 def average_ngram_entropy(ids, unigram_ylims, bigram_ylims, settings):
     ngram_entropy_data = [
         # L_1
@@ -42,7 +45,7 @@ def average_ngram_entropy(ids, unigram_ylims, bigram_ylims, settings):
     
     fig, ax = plt.subplots(nrows=2, sharex='col', gridspec_kw={'height_ratios': (6,1)})
     fig.set_facecolor('lightgray')
-    fig.suptitle(f"Unigram entropy (natt={settings['natt']},nval={settings['nval']},cvoc={settings['cvoc']},clen={settings['clen']})")
+    fig.suptitle(f"Unigram entropy ({settings['natt']},{settings['nval']},{settings['cvoc']},{settings['clen']})")
     fig.subplots_adjust(hspace=0.05)
     ax[0].set_ylabel("entropy")
     ax[0].set_ylim(unigram_ylims[2], unigram_ylims[3])
@@ -73,7 +76,7 @@ def average_ngram_entropy(ids, unigram_ylims, bigram_ylims, settings):
 
     fig, ax = plt.subplots(nrows=2, sharex='col', gridspec_kw={'height_ratios': (6,1)})
     fig.set_facecolor('lightgray')
-    fig.suptitle(f"Bigram entropy (natt={settings['natt']},nval={settings['nval']},cvoc={settings['cvoc']},clen={settings['clen']})")
+    fig.suptitle(f"Bigram entropy ({settings['natt']},{settings['nval']},{settings['cvoc']},{settings['clen']})")
     fig.subplots_adjust(hspace=0.05)
     ax[0].set_ylabel("entropy")
     ax[0].set_ylim(bigram_ylims[2], bigram_ylims[3])
@@ -128,7 +131,7 @@ def average_sender_entropy(ids, settings):
         sender_entropy_data[3]["sender_entropy"].append(float(match.group(1)))
     
     plt.figure(facecolor='lightgray')
-    plt.title(f"Sender Entropy (natt={settings['natt']},nval={settings['nval']},cvoc={settings['cvoc']},clen={settings['clen']})")
+    plt.title(f"Sender Entropy ({settings['natt']},{settings['nval']},{settings['cvoc']},{settings['clen']})")
     plt.ylabel("entropy")
     plt.bar(
         ["L_1", "L_2", "L_3", "L_4"],
@@ -165,7 +168,7 @@ def average_topsim(ids, settings):
         topsim_data[3]["topsim"].append(float(match.group(4)))
     
     plt.figure(facecolor='lightgray')
-    plt.title(f"Topsim (natt={settings['natt']},nval={settings['nval']},cvoc={settings['cvoc']},clen={settings['clen']})")
+    plt.title(f"Topsim ({settings['natt']},{settings['nval']},{settings['cvoc']},{settings['clen']})")
     plt.ylabel("topsim")
     plt.bar(
         ["L_1", "L_2", "L_3", "L_4"],
@@ -212,7 +215,7 @@ def get_limit_index(count):
 
 def average_change_of_acc(ids, L_raw_datas, settings):
     plt.figure(facecolor='lightgray')
-    plt.title(f"Change of Acc (natt={settings['natt']},nval={settings['nval']},cvoc={settings['cvoc']},clen={settings['clen']})")
+    plt.title(f"Change of Acc ({settings['natt']},{settings['nval']},{settings['cvoc']},{settings['clen']})")
     plt.xlabel("epochs")
     plt.ylabel("acc")
     max_epochs = [max([len(L_raw_datas[i][j]["test"]) for i in range(len(L_raw_datas))]) for j in range(4)] # max epochs for each L_1 ~ L_4
@@ -235,7 +238,7 @@ def average_change_of_acc(ids, L_raw_datas, settings):
     plt.savefig(f"averaged_result/{ids[0]}~{ids[-1]}/change_of_acc.png", dpi=500)
 
     plt.figure(facecolor='lightgray')
-    plt.title(f"Change of Acc(log scale) (natt={settings['natt']},nval={settings['nval']},cvoc={settings['cvoc']},clen={settings['clen']})")
+    plt.title(f"Change of Acc(log scale) ({settings['natt']},{settings['nval']},{settings['cvoc']},{settings['clen']})")
     plt.xlabel("epochs")
     plt.ylabel("acc")
     max_epochs = [max([len(L_raw_datas[i][j]["test"]) for i in range(len(L_raw_datas))]) for j in range(4)] # max epochs for each L_1 ~ L_4
@@ -259,7 +262,7 @@ def average_change_of_acc(ids, L_raw_datas, settings):
 
 def average_ease_of_learning_frozen_receiver(ids, L_raw_datas, settings):
     plt.figure(facecolor='lightgray')
-    plt.title(f"Ease of Learning (frozen receiver) (natt={settings['natt']},nval={settings['nval']},cvoc={settings['cvoc']},clen={settings['clen']})")
+    plt.title(f"Ease of Learning (frozen receiver) ({settings['natt']},{settings['nval']},{settings['cvoc']},{settings['clen']})")
     plt.xlabel("epochs")
     plt.ylabel("acc")
     max_epochs = [max([len(L_raw_datas[i][j]["test"]) for i in range(len(L_raw_datas))]) for j in [4, 6, 8, 10]]
@@ -283,7 +286,7 @@ def average_ease_of_learning_frozen_receiver(ids, L_raw_datas, settings):
 
 def average_ease_of_learning_frozen_sender(ids, L_raw_datas, settings):
     plt.figure(facecolor='lightgray')
-    plt.title(f"Ease of Learning (frozen sender) (natt={settings['natt']},nval={settings['nval']},cvoc={settings['cvoc']},clen={settings['clen']})")
+    plt.title(f"Ease of Learning (frozen sender) ({settings['natt']},{settings['nval']},{settings['cvoc']},{settings['clen']})")
     plt.xlabel("epochs")
     plt.ylabel("acc")
     max_epochs = [max([len(L_raw_datas[i][j]["test"]) for i in range(len(L_raw_datas))]) for j in [5, 7, 9, 11]]
@@ -307,7 +310,7 @@ def average_ease_of_learning_frozen_sender(ids, L_raw_datas, settings):
 
 def average_generalizability(ids, L_raw_datas, settings):
     plt.figure(facecolor='lightgray')
-    plt.title(f"Generalizability (natt={settings['natt']},nval={settings['nval']},cvoc={settings['cvoc']},clen={settings['clen']})")
+    plt.title(f"Generalizability ({settings['natt']},{settings['nval']},{settings['cvoc']},{settings['clen']})")
     plt.xlabel("epochs")
     plt.ylabel("acc")
     max_epochs = [max([len(L_raw_datas[i][j]["generalization"]) for i in range(len(L_raw_datas))]) for j in range(4)]
@@ -331,7 +334,7 @@ def average_generalizability(ids, L_raw_datas, settings):
     plt.savefig(f"averaged_result/{ids[0]}~{ids[-1]}/generalizability.png", dpi=500)
 
     plt.figure(facecolor='lightgray')
-    plt.title(f"Generalizability(log scale) (natt={settings['natt']},nval={settings['nval']},cvoc={settings['cvoc']},clen={settings['clen']})")
+    plt.title(f"Generalizability(log scale) ({settings['natt']},{settings['nval']},{settings['cvoc']},{settings['clen']})")
     plt.xlabel("log(epochs)")
     plt.ylabel("acc")
     max_epochs = [max([len(L_raw_datas[i][j]["generalization"]) for i in range(len(L_raw_datas))]) for j in range(4)]
@@ -364,7 +367,7 @@ def average_ngram_counts(ids, settings):
             counts_bigrams.append(pickle.load(f))
     
     plt.figure(facecolor='lightgray')
-    plt.title(f"Unigram Counts (natt={settings['natt']},nval={settings['nval']},cvoc={settings['cvoc']},clen={settings['clen']})")
+    plt.title(f"Unigram Counts ({settings['natt']},{settings['nval']},{settings['cvoc']},{settings['clen']})")
     plt.xlabel("log(Rank)")
     plt.ylabel("log(Counts)")
     plots = []
@@ -392,11 +395,11 @@ def average_ngram_counts(ids, settings):
                 ngram_counts - std,
                 alpha=0.25
             )
-    plt.legend((plot[0] for plot in plots), ("L_1", "L_2", "L_3", "L_4"), loc=1)
+    plt.legend((plot[0] for plot in plots), ("L_1", "L_2", "L_3", "L_4"), loc=3)
     plt.savefig(f"averaged_result/{ids[0]}~{ids[-1]}/ngram_unigram.png", dpi=500)
 
     plt.figure(facecolor='lightgray')
-    plt.title(f"Bigram Counts (natt={settings['natt']},nval={settings['nval']},cvoc={settings['cvoc']},clen={settings['clen']})")
+    plt.title(f"Bigram Counts ({settings['natt']},{settings['nval']},{settings['cvoc']},{settings['clen']})")
     plt.xlabel("log(Rank)")
     plt.ylabel("log(Counts)")
     plots = []
@@ -423,7 +426,7 @@ def average_ngram_counts(ids, settings):
                 ngram_counts - std,
                 alpha=0.25
             )
-    plt.legend((plot[0] for plot in plots), ("L_1", "L_2", "L_3", "L_4"), loc=1)
+    plt.legend((plot[0] for plot in plots), ("L_1", "L_2", "L_3", "L_4"), loc=3)
     plt.savefig(f"averaged_result/{ids[0]}~{ids[-1]}/ngram_bigram.png", dpi=500)
 
 if __name__ == "__main__":
