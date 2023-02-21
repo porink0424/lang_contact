@@ -43,7 +43,8 @@ def average_ngram_entropy(ids, unigram_ylims, bigram_ylims, settings):
         ngram_entropy_data[3]["unigram"].append(float(match.group(7)))
         ngram_entropy_data[3]["bigram"].append(float(match.group(8)))
     
-    fig, ax = plt.subplots(nrows=2, sharex='col', gridspec_kw={'height_ratios': (6,1)})
+    fig, ax = plt.subplots(nrows=2, sharex='col', gridspec_kw={'height_ratios': (6,1)}, figsize=(4,8))
+    fig.subplots_adjust(left=0.16)
     fig.set_facecolor('lightgray')
     fig.suptitle(f"Unigram entropy ({settings['natt']},{settings['nval']},{settings['cvoc']},{settings['clen']})")
     fig.subplots_adjust(hspace=0.05)
@@ -74,7 +75,8 @@ def average_ngram_entropy(ids, unigram_ylims, bigram_ylims, settings):
     ax[1].set_yticklabels([0])
     fig.savefig(f"averaged_result/{ids[0]}~{ids[-1]}/unigram_entropy.png", dpi=500)
 
-    fig, ax = plt.subplots(nrows=2, sharex='col', gridspec_kw={'height_ratios': (6,1)})
+    fig, ax = plt.subplots(nrows=2, sharex='col', gridspec_kw={'height_ratios': (6,1)}, figsize=(4,8))
+    fig.subplots_adjust(left=0.16)
     fig.set_facecolor('lightgray')
     fig.suptitle(f"Bigram entropy ({settings['natt']},{settings['nval']},{settings['cvoc']},{settings['clen']})")
     fig.subplots_adjust(hspace=0.05)
@@ -130,7 +132,9 @@ def average_sender_entropy(ids, settings):
         match = re.search(r'\{\"mode\": \"test\", \"epoch\": .*?, \"loss\": .*?, \"acc\": .*?, \"acc_or\": .*?, \"sender_entropy\": (.*?), .*?\}\n\{\"generalization\": \{.*?\}, .*?\}\n--------------------L_4 training end--------------------', raw_text)
         sender_entropy_data[3]["sender_entropy"].append(float(match.group(1)))
     
-    plt.figure(facecolor='lightgray')
+    fig = plt.figure(facecolor='lightgray', figsize=(4,8))
+    fig.subplots_adjust(left=0.16)
+    plt.ylim(0, 0.7)
     plt.title(f"Sender Entropy ({settings['natt']},{settings['nval']},{settings['cvoc']},{settings['clen']})")
     plt.ylabel("entropy")
     plt.bar(
@@ -140,10 +144,6 @@ def average_sender_entropy(ids, settings):
         capsize=10,
     )
     plt.savefig(f"averaged_result/{ids[0]}~{ids[-1]}/sender_entropy.png", dpi=500)
-
-    print("sender entropy")
-    print("avg:", [np.average(sender_entropy_data[i]["sender_entropy"]) for i in range(4)])
-    print("sem:", [np.std(sender_entropy_data[i]["sender_entropy"], ddof=1) / np.sqrt(len(ids)) for i in range(4)])
 
 def average_topsim(ids, settings):
     topsim_data = [
@@ -167,9 +167,11 @@ def average_topsim(ids, settings):
         topsim_data[2]["topsim"].append(float(match.group(3)))
         topsim_data[3]["topsim"].append(float(match.group(4)))
     
-    plt.figure(facecolor='lightgray')
+    fig = plt.figure(facecolor='lightgray', figsize=(4,8))
+    fig.subplots_adjust(left=0.19)
     plt.title(f"Topsim ({settings['natt']},{settings['nval']},{settings['cvoc']},{settings['clen']})")
     plt.ylabel("topsim")
+    plt.ylim(0, 0.3)
     plt.bar(
         ["L_1", "L_2", "L_3", "L_4"],
         [np.average(topsim_data[i]["topsim"]) for i in range(4)],
@@ -177,10 +179,6 @@ def average_topsim(ids, settings):
         capsize=10,
     )
     plt.savefig(f"averaged_result/{ids[0]}~{ids[-1]}/topsim.png", dpi=500)
-
-    print("topsim")
-    print("avg:", [np.average(topsim_data[i]["topsim"]) for i in range(4)])
-    print("sem:", [np.std(topsim_data[i]["topsim"], ddof=1) / np.sqrt(len(ids)) for i in range(4)])
 
 # L_raw_datas: the list of numbers of `L_raw_data` generated in each experiment.
 def extract_L_raw_datas(ids):
@@ -466,19 +464,8 @@ if __name__ == "__main__":
     except FileExistsError:
         pass
 
-    # Need to change according to values of n-gram entropy
-    # # 2-100-5-8
-    # unigram_ylims = [0, 0.1, 2.25, 2.35]
-    # bigram_ylims = [0, 0.1, 4.40, 4.70]
-    # # 2-100-10-6
-    # unigram_ylims = [0, 0.1, 3.22, 3.32]
-    # bigram_ylims = [0, 0.1, 6.35, 6.65]
-    # # 4-10-5-8
-    # unigram_ylims = [0, 0.1, 2.25, 2.35]
-    # bigram_ylims = [0, 0.1, 4.40, 4.70]
-    # 4-10-10-6
-    unigram_ylims = [0, 0.1, 3.22, 3.32]
-    bigram_ylims = [0, 0.1, 6.35, 6.65]
+    unigram_ylims = [0, 0.1, 2.2, 3.4]
+    bigram_ylims = [0, 0.1, 4.4, 6.7]
 
     average_ngram_entropy(ids, unigram_ylims, bigram_ylims, settings)
     average_sender_entropy(ids, settings)
